@@ -12,7 +12,7 @@ class EmailService(private val mailSender: JavaMailSender) {
     private val dotenv: Dotenv = Dotenv.load()
 
     fun sendOtp(email: String, otp: String) {
-        val smtpUsername = dotenv["SMTP_USERNAME"]
+        val smtpUsername = dotenv["SMTP_USERNAME"] ?: "lisvindanu015@gmail.com"
         val smtpPassword = dotenv["SMTP_PASSWORD"] ?: "ynpg wwzi lenc lmze"
         val smtpHost = dotenv["SMTP_HOST"] ?: "smtp.gmail.com"
         val smtpPort = dotenv["SMTP_PORT"]?.toInt() ?: 587
