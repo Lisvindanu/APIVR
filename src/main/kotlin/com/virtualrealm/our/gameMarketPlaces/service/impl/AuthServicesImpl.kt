@@ -4,13 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.virtualrealm.our.gameMarketPlaces.entity.User
 import com.virtualrealm.our.gameMarketPlaces.entity.UserToken
 import com.virtualrealm.our.gameMarketPlaces.model.authModel.*
+import com.virtualrealm.our.gameMarketPlaces.repository.OtpTokenRepository
 import com.virtualrealm.our.gameMarketPlaces.repository.TokenRepository
 import com.virtualrealm.our.gameMarketPlaces.repository.UserRepository
 import com.virtualrealm.our.gameMarketPlaces.service.AuthServices
 import com.virtualrealm.our.gameMarketPlaces.validation.ValidationUtil
 import io.github.cdimascio.dotenv.Dotenv
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -32,6 +31,7 @@ class AuthServicesImpl  (
     private val tokenRepository: TokenRepository,
     private val otpService: OtpService,
     private val emailService: EmailService,
+    private val otpTokenRepository: OtpTokenRepository
 
 ) : AuthServices {
 
@@ -50,7 +50,6 @@ class AuthServicesImpl  (
 
     @Transactional
     override fun register(registerRequest: RegisterRequest): RegisterResponseData {
-
         logger.info("Registering new user: ${registerRequest.username}")
         validationUtil.validate(registerRequest)
 
@@ -67,6 +66,7 @@ class AuthServicesImpl  (
         }
 
         val password = if (registerRequest.isGoogle) {
+            logger.info("User is registering using Google account")
             null
         } else {
             registerRequest.password ?: throw IllegalArgumentException("Password cannot be null")
@@ -83,8 +83,24 @@ class AuthServicesImpl  (
         val savedUser = userRepository.save(user)
         logger.info("User registered with ID: ${savedUser.id}")
 
+        // Generate OTP for the user and send it via email
+        val otp = savedUser.id?.let { otpService.generateOtp(it) }
+        if (otp != null) {
+            try {
+                emailService.sendOtp(savedUser.email, otp)
+                logger.info("OTP sent to ${savedUser.email}")
+            } catch (e: Exception) {
+                logger.error("Failed to send OTP to ${savedUser.email}: ${e.message}")
+                throw RuntimeException("Failed to send OTP. Please try again.")
+            }
+        } else {
+            logger.error("Failed to generate OTP for user ID: ${savedUser.id}")
+            throw IllegalStateException("Failed to generate OTP for user")
+        }
+
         return convertUserToResponseData(savedUser)
     }
+
 
     @Transactional
     override fun registerOrLoginWithGoogle(userData: UserDataResponse): RegisterResponseData {
@@ -113,25 +129,37 @@ class AuthServicesImpl  (
     override fun login(loginRequest: LoginRequest): LoginResponseData {
         validationUtil.validate(loginRequest)
 
-        // Google login flow
+        // Cek login dengan Google
         if (loginRequest.isGoogle) {
             val googleToken = loginRequest.googleToken ?: throw IllegalArgumentException("Google token cannot be null")
             val userData = getUserDataFromGoogleToken(googleToken)
             logger.info("Google login successful for user: ${userData.username}")
-            val user = userRepository.findByUsername(userData.username)
-                ?: userRepository.save(User(username = userData.username, email = userData.email, password = ""))
+
+            val existingUser = userRepository.findByUsername(userData.username)
+            val user = existingUser ?: userRepository.save(User(username = userData.username, email = userData.email, password = ""))
+
+            // Cek apakah pengguna sudah memiliki token yang masih berlaku
+            val existingToken = tokenRepository.findByUser(user)
+            if (existingToken != null && existingToken.expiresAt.isAfter(LocalDateTime.now())) {
+                logger.warn("User already logged in with token: ${user.username}")
+                return LoginResponseData(
+                    message = "User is already logged in. Please logout first.",
+                    status = "ERROR"
+                )
+            }
+
+            // Jika token tidak ada atau sudah kedaluwarsa, buat token baru
             val token = generateAndStoreToken(user)
 
             logger.debug("Token generated: ${token.token}")
-            return LoginResponseData(token = token.token, expiresAt = token.expiresAt, status = "success")
+            return LoginResponseData(token = token.token, expiresAt = token.expiresAt, status = "SUCCESS")
         }
 
-        // Proses login biasa dengan username dan password
+        // Login biasa dengan username dan password
         val user = userRepository.findByUsername(loginRequest.email)
             ?: throw IllegalArgumentException("Invalid Credentials")
         val password = loginRequest.password ?: throw IllegalArgumentException("Password cannot be null")
 
-        // Validasi password
         if (!checkPassword(password, user.password)) {
             logger.warn("Invalid password for user: ${loginRequest.email}")
             return LoginResponseData(
@@ -140,38 +168,29 @@ class AuthServicesImpl  (
             )
         }
 
-        // Jika isOtpVerified sudah true, langsung buatkan token
-        if (loginRequest.isOtpVerified) {
-            val token = generateAndStoreToken(user)
+        // Cek apakah pengguna sudah memiliki token yang masih berlaku
+        val existingToken = tokenRepository.findByUser(user)
+        if (existingToken != null && existingToken.expiresAt.isAfter(LocalDateTime.now())) {
+            logger.warn("User already logged in with token: ${user.username}")
             return LoginResponseData(
-                token = token.token,
-                expiresAt = token.expiresAt,
-                status = "SUCCESS"
+                message = "User is already logged in. Please logout first.",
+                status = "ERROR"
             )
         }
 
-        // Jika OTP belum dikirimkan
-        var isOtpSent = false
-        val activeOtp = otpService.getActiveOtpForUser(user.id!!)
-        if (activeOtp == null) {
-            // Generate dan kirim OTP ke email
-            val otp = otpService.generateOtp(user.id!!)
-            emailService.sendOtp(user.email, otp)
-            isOtpSent = true // Tandai OTP sudah dikirim
-            logger.info("OTP sent to email: ${user.email}")
-            return LoginResponseData(
-                message = "OTP sent to your email",
-                status = "PENDING"
-            )
-        } else {
-            // Jika OTP sudah dikirimkan sebelumnya
-            logger.info("OTP already sent to email: ${user.email}")
-            return LoginResponseData(
-                message = "OTP has already been sent to your email",
-                status = "PENDING"
-            )
-        }
+        // Jika token tidak ada atau sudah kedaluwarsa, buat token baru
+        val token = generateAndStoreToken(user)
+        return LoginResponseData(
+            token = token.token,
+            expiresAt = token.expiresAt,
+            status = "SUCCESS"
+        )
     }
+
+
+
+
+
 
 
 
@@ -325,42 +344,52 @@ class AuthServicesImpl  (
 
 
     @Transactional
-    override fun verifyOtpForLogin(otpVerificationRequest: OtpVerificationRequest): LoginResponseData {
-        val userId = otpVerificationRequest.userId
+    override fun verifyOtpForRegistration(otpVerificationRequest: OtpVerificationRequest): RegisterResponseData {
+        val email = otpVerificationRequest.email
         val otp = otpVerificationRequest.otp
 
-        // Validasi OTP menggunakan service
-        if (!otpService.validateOtp(userId, otp)) {
-            throw IllegalArgumentException("Invalid or expired OTP")
+        // Find the user by email
+        val user = userRepository.findByEmail(email)
+            .orElseThrow { IllegalArgumentException("User not found") }
+
+        // Validate OTP using OtpTokenRepository
+        val otpToken = otpTokenRepository.findByUserIdAndOtp(user.id!!, otp)
+            .orElseThrow { IllegalArgumentException("Invalid OTP") }
+
+        // Check if OTP has expired
+        if (otpToken.expiresAt.isBefore(LocalDateTime.now())) {
+            throw IllegalArgumentException("OTP has expired")
         }
 
-        // OTP tervalidasi, ambil user
-        val user = userRepository.findById(userId).orElseThrow {
-            IllegalArgumentException("User not found")
-        }
-
-        // Tandai OTP sebagai verified
+        // Mark the OTP as verified in the User entity
         user.isOtpVerified = true
         userRepository.save(user)
 
-        // Buat token baru untuk user
-        val token = generateAndStoreToken(user)
+        // Optionally, delete the OTP token after verification
+        otpTokenRepository.deleteByUserId(user.id!!)
 
-        return LoginResponseData(
-            token = token.token,
-            expiresAt = token.expiresAt,
-            status = "success"
+        // Return response
+        return RegisterResponseData(
+            id = user.id,
+            username = user.username,
+            email = user.email,
+            created_at = user.createdAt,
+            message = "Registration successful",
+            status = "SUCCESS"
         )
     }
+
 
 
     private fun convertUserToResponseData(user: User): RegisterResponseData {
         val userId = user.id?.toString() ?: throw IllegalArgumentException("User ID cannot be null")
         return RegisterResponseData(
-            id = user.id.toString(),
+            id = user.id,
             username = user.username,
             email = user.email,
-            created_at = user.createdAt
+            created_at = user.createdAt,
+            message = "Registration successful",
+            status = "SUCCESS"
         )
     }
 

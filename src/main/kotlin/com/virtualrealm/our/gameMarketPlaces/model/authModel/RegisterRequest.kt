@@ -6,6 +6,7 @@ data class RegisterRequest(
     val password: String,
     val password_confirmation: String,
     val isGoogle: Boolean = false,  // Flag for Google registration
-    val googleToken: String? = null // Google OAuth token
+    val googleToken: String? = null, // Google OAuth token
+    val isOtpVerified: Boolean = false
 
 )

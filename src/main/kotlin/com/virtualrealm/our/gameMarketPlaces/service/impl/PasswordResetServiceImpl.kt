@@ -6,7 +6,6 @@ import com.virtualrealm.our.gameMarketPlaces.repository.PasswordResetTokenReposi
 import com.virtualrealm.our.gameMarketPlaces.repository.UserRepository
 import com.virtualrealm.our.gameMarketPlaces.service.PasswordResetService
 import org.mindrot.jbcrypt.BCrypt
-
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -19,8 +18,7 @@ class PasswordResetServiceImpl(
     private val emailService: EmailService
 ) : PasswordResetService {
 
-
-// Generate reset token
+    // Generate reset token
     override fun generateResetToken(userId: Long): String {
         val token = (100000..999999).random().toString() // Generate a random token
         val expiresAt = LocalDateTime.now().plusMinutes(15) // Token expires in 15 minutes
@@ -74,12 +72,11 @@ class PasswordResetServiceImpl(
     // Request reset password by email
     fun requestPasswordReset(email: String): String {
         val user = userRepository.findByEmail(email)
-            ?: throw IllegalArgumentException("User with email $email not found")
+            .orElseThrow { IllegalArgumentException("User with email $email not found") }
 
         // Generate and send reset token
         return generateResetToken(user.id!!)
     }
-
 
     private fun hashPassword(password: String): String {
         return BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt())

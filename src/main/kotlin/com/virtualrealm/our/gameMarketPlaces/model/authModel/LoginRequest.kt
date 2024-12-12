@@ -7,6 +7,6 @@ data class LoginRequest(
     val otp: String? = null,
     val isGoogle: Boolean = false,  // Flag for Google registration
     val googleToken: String? = null, // Google OAuth token
-    val isOtpVerified: Boolean = false
+
 
 )

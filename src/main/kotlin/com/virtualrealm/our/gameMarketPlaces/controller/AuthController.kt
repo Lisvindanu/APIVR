@@ -27,6 +27,7 @@ import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.MalformedJwtException
 import io.jsonwebtoken.UnsupportedJwtException
 import io.jsonwebtoken.SignatureException
+import java.time.LocalDateTime
 
 
 @Controller
@@ -40,43 +41,50 @@ class AuthController(
     private val error: View,
     private val otpService: OtpService,
     private val emailService: EmailService,
-    tokenRepository: TokenRepository
+    private val tokenRepository: TokenRepository
 ) {
     private val logger = LoggerFactory.getLogger(AuthServicesImpl::class.java)
-    @PostMapping("/register")
-    fun register(@RequestBody @Valid request: RegisterRequest): ResponseEntity<WebResponse<RegisterResponseData>> {
 
-        if(request.password != request.password_confirmation) {
+    @PostMapping("/register")
+    fun register(@RequestBody @Valid request: RegisterRequest): ResponseEntity<WebResponse<String>> {
+        // Validasi password dan konfirmasi password
+        if (request.password != request.password_confirmation) {
             logger.error("Password and confirm password do not match!")
             throw IllegalStateException("Password and confirm password must match!")
         }
 
-        val registerResponseData = if (request.isGoogle && !request.googleToken.isNullOrEmpty()) {
-            val userData = authServices.getUserDataFromGoogleToken(request.googleToken)
-            authServices.registerOrLoginWithGoogle(userData)
-        } else {
-            authServices.register(request)
+        // Cek apakah email sudah terdaftar
+        val existingUser = userRepository.findByEmail(request.email).orElse(null)
+        if (existingUser != null) {
+            logger.error("User email already exists: ${request.email}")
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                WebResponse(400, "error", null, "User email already exists")
+            )
         }
 
-        val response = WebResponse(
-            code = 201,
-            status = "success",
-            data = registerResponseData
+        // Proses pendaftaran pengguna
+        val hashedPassword = BCrypt.hashpw(request.password, BCrypt.gensalt())
+        val user = userRepository.save(
+            User(
+                username = request.username,
+                email = request.email,
+                password = hashedPassword
+            )
         )
-        return ResponseEntity.ok(response)
-    }
 
+        // Pastikan user.id bukan null dan memiliki tipe Long
+        val userId = user.id ?: throw IllegalStateException("User ID is missing")
 
-    @PostMapping("/logout")
-    fun logout(@RequestHeader("Authorization") authorization: String): ResponseEntity<WebResponse<String>> {
-        val token = authorization.removePrefix("Bearer ").trim() // Strip "Bearer " prefix
-        authServices.logout(token)
-        val response = WebResponse(
+        // Kirim OTP setelah registrasi
+        val otp = otpService.generateOtp(userId)
+        emailService.sendOtp(user.email, otp)
+
+        return ResponseEntity.ok(WebResponse(
             code = 200,
-            status = "success",
-            data = "Successfully logged out"
-        )
-        return ResponseEntity.ok(response)
+            status = OtpStatus.OTP_SENT.status,
+            data = "Please verify OTP sent to your email to complete the registration.",
+            message = OtpStatus.OTP_SENT.message
+        ))
     }
 
 
@@ -84,70 +92,41 @@ class AuthController(
     @PostMapping("/login")
     fun login(@RequestBody @Valid request: LoginRequest): ResponseEntity<WebResponse<Any>> {
         return try {
-            val user = userRepository.findByEmail(request.email)
-                ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    WebResponse(401, "error", null, "Invalid credentials")
-                )
+            // Cek apakah email ditemukan
+            val user = userRepository.findByEmail(request.email).orElseThrow {
+                IllegalStateException("Invalid credentials")
+            }
 
+            // Validasi password
             if (request.password.isNullOrBlank() || !checkPassword(request.password, user.password)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                     WebResponse(401, "error", null, "Invalid credentials")
                 )
             }
 
-            // Cek jika OTP sudah diverifikasi
-            if (request.isOtpVerified) {
-                val token = authServices.generateAndStoreToken(user)
-                val responseData = LoginResponseData(token.token, token.expiresAt, "Login successful", "success")
-                return ResponseEntity.ok(WebResponse(
-                    code = 200,
-                    status = "success",
-                    data = responseData,
-                    message = "Login successful"
-                ))
-            }
-
-            // OTP handling
-            val activeOtp = otpService.getActiveOtpForUser(user.id!!)
-            if (request.otp == null) {
-                if (activeOtp == null) {
-                    val otp = otpService.generateOtp(user.id!!)
-                    emailService.sendOtp(user.email, otp)
-                    return ResponseEntity.ok(WebResponse(
-                        code = 200,
-                        status = OtpStatus.OTP_REQUIRED.status,
-                        data = null,
-                        message = OtpStatus.OTP_SENT.message
-                    ))
-                }
-                return ResponseEntity.ok(WebResponse(
-                    code = 200,
-                    status = OtpStatus.OTP_ALREADY_SENT.status,
-                    data = null,
-                    message = OtpStatus.OTP_ALREADY_SENT.message
-                ))
-            }
-
-            // Verify OTP
-            if (!otpService.validateOtp(user.id!!, request.otp)) {
+            // Cek apakah pengguna sudah memiliki token yang masih berlaku
+            val existingToken = tokenRepository.findByUser(user)
+            if (existingToken != null && existingToken.expiresAt.isAfter(LocalDateTime.now())) {
+                logger.warn("User already logged in with token: ${user.username}")
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    WebResponse(401, "error", null, "Invalid or expired OTP")
+                    WebResponse(401, "error", null, "User is already logged in. Please logout first.")
                 )
             }
 
-            // Mark OTP as verified
-            userService.markOtpAsVerified(user.id!!, request.otp!!) // Mark OTP as verified and update `isOtpVerified` to true
-
-            // Generate token
+            // Jika token tidak ada atau sudah kedaluwarsa, buat token baru
             val token = authServices.generateAndStoreToken(user)
-            val responseData = LoginResponseData(token.token, token.expiresAt, "OTP verification successful", "success")
+
+            // Menyiapkan data respons
+            val responseData = LoginResponseData(token.token, token.expiresAt, "Login successful", "success")
             return ResponseEntity.ok(WebResponse(
                 code = 200,
-                status = OtpStatus.OTP_VERIFIED.status,
+                status = "success",
                 data = responseData,
-                message = OtpStatus.OTP_VERIFIED.message
+                message = "Login successful"
             ))
+
         } catch (e: Exception) {
+            // Menangani kesalahan yang terjadi
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 WebResponse(500, "error", null, "An unexpected error occurred: ${e.message}")
             )
@@ -159,9 +138,12 @@ class AuthController(
 
 
 
+
     @PostMapping("/send-otp")
     fun sendOtp(@RequestParam email: String): ResponseEntity<WebResponse<String>> {
-        val user = userRepository.findByEmail(email) ?: throw IllegalStateException("User not found!")
+        val user = userRepository.findByEmail(email).orElseThrow {
+            IllegalStateException("Invalid credentials")
+        }
 
         val existingOtp = otpService.getActiveOtpForUser(user.id!!)
         if (existingOtp != null) {
@@ -180,39 +162,50 @@ class AuthController(
     }
 
 
-    @PostMapping("/verify-otp-login")
-    fun verifyOtpLogin(@RequestBody @Valid request: LoginRequest): ResponseEntity<WebResponse<LoginResponseData>> {
-        return try {
-            val user = userRepository.findByEmail(request.email)
-                ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    WebResponse(401, "error", null, "User not found")
-                )
 
-            // Validate OTP
-            val isValidOtp = request.otp?.let { otpService.validateOtp(user.id!!, it) } ?: false
-            if (!isValidOtp) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    WebResponse(401, "error", null, "Invalid or expired OTP")
-                )
-            }
+    @PostMapping("/verify-otp-regis")
+    fun verifyOtpRegis(@RequestBody @Valid request: OtpVerificationRequest): ResponseEntity<WebResponse<String>> {
+        // Cari pengguna berdasarkan email
+        val user = userRepository.findByEmail(request.email).orElseThrow {
+            IllegalStateException("Invalid credentials")
+        }
 
-            userService.markOtpAsVerified(user.id!!, request.otp!!)  // Tandai OTP sebagai terverifikasi
-
-            // Generate token
-            val token = authServices.generateAndStoreToken(user)
-            val responseData = LoginResponseData(token.token, token.expiresAt, "OTP verified successfully", "success")
-            return ResponseEntity.ok(WebResponse(
-                code = 200,
-                status = "success",
-                data = responseData,
-                message = "OTP verification successful"
-            ))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                WebResponse(500, "error", null, "An unexpected error occurred: ${e.message}")
+        // Validasi OTP
+        val isValidOtp = otpService.validateOtp(user.id!!, request.otp)
+        if (!isValidOtp) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                WebResponse(401, "error", null, OtpStatus.OTP_FAILED.message)
             )
         }
+
+        // Tandai OTP sebagai terverifikasi
+        userService.markOtpAsVerified(user.id!!, request.otp)
+
+        // Finalisasi registrasi dan buat token
+        val token = authServices.generateAndStoreToken(user)
+
+        return ResponseEntity.ok(WebResponse(
+            code = 200,
+            status = OtpStatus.OTP_VERIFIED.status,
+            data = "User registered successfully. Token: ${token.token}",
+            message = OtpStatus.OTP_VERIFIED.message
+        ))
     }
+
+
+
+    @PostMapping("/logout")
+    fun logout(@RequestHeader("Authorization") authorization: String): ResponseEntity<WebResponse<String>> {
+        val token = authorization.removePrefix("Bearer ").trim() // Strip "Bearer " prefix
+        authServices.logout(token)
+        val response = WebResponse(
+            code = 200,
+            status = "success",
+            data = "Successfully logged out"
+        )
+        return ResponseEntity.ok(response)
+    }
+
 
     @GetMapping("/user")
     fun getUserData(@RequestHeader("Authorization") authorization: String): ResponseEntity<WebResponse<UserDataResponse>> {

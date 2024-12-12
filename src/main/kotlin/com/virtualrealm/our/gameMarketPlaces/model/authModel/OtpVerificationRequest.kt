@@ -1,6 +1,6 @@
 package com.virtualrealm.our.gameMarketPlaces.model.authModel
 
 data class OtpVerificationRequest(
-    val userId:Long,
+    val email:String,
     val otp:String
 )

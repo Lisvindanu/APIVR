@@ -8,7 +8,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User
 interface AuthServices {
     fun register(registerRequest: RegisterRequest): RegisterResponseData
     fun login(loginRequest: LoginRequest): LoginResponseData
-    fun verifyOtpForLogin(otpVerificationRequest: OtpVerificationRequest): LoginResponseData
+    fun verifyOtpForRegistration(otpVerificationRequest: OtpVerificationRequest): RegisterResponseData
     fun logout(token: String)
     fun getUserData(token: String): UserDataResponse
     fun exchangeAuthCodeForToken(code: String): String

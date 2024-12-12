@@ -3,65 +3,49 @@ POST http://localhost:8080/api/auth/send-otp?email=anaphygon@protonmail.com
 X-Api-Key: secret
 
 
-### Register User
+### Register Request (with OTP)
 POST http://localhost:8080/api/auth/register
-X-Api-Key: secret
 Content-Type: application/json
-Accept: application/json
+X-Api-Key: secret
 
 {
-  "username": "LebahGanteng",
-  "email": "LebahGanteng@protonmail.com",
-  "password": "LebahGanteng",
-  "password_confirmation": "LebahGanteng",
-  "isGoogle": false
-}
-
-### Login kondisi isOtpVerified : false
-POST http://localhost:8080/api/auth/login
-X-Api-Key: secret
-Content-Type: application/json
-Accept: application/json
-
-{
-  "email": "Anaphygon@protonmail.com",
-  "password": "Passwordku12",
+  "username": "Lisvindanu",
+  "email": "Lisvindanu@gmail.com",
+  "password": "TestPassword123",
+  "password_confirmation": "TestPassword123",
   "isGoogle": false,
-  "isOtpVerified" : false
-
+  "googleToken": null,
+  "isOtpVerified": false
 }
 
 ### verif otp
-POST http://localhost:8080/api/auth/verify-otp-login
+POST http://localhost:8080/api/auth/verify-otp-regis
 X-Api-Key: secret
 Content-Type: application/json
 
 {
-  "email": "Anaphygon@protonmail.com",
+  "email": "Lisvindanu@gmail.com",
 
-  "otp": "771228"
+  "otp": "529564"
 }
 
-### Login setelah verifotp true
+
+### Login
 POST http://localhost:8080/api/auth/login
 X-Api-Key: secret
 Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "Anaphygon@protonmail.com",
-  "password": "LoLoLo",
-  "isGoogle": false,
-  "isOtpVerified" : true
-
+  "email": "anaphygon@protonmail.com",
+  "password": "TestPassword123",
+  "isGoogle": false
 }
-
-
 
 ### Test the /user endpoint
 GET http://localhost:8080/api/auth/user
 X-Api-Key: secret
-Authorization: eyJzdWIiOiIzZWRjMDcxMi1jZGZkLTQ3YWEtOTZlMy0wMjYzYjVjNjA1ZTgiLCJ1c2VybmFtZSI6IkFuYXBoeWdvbiJ9
+Authorization: eyJzdWIiOiI2MjFmZGY2NS0yZTVmLTQ4MWItYjQxNi04NjU2OWY0MjljNWUiLCJ1c2VybmFtZSI6Ikxpc3ZpbmRhbnUifQ==
 
 
 
@@ -71,7 +55,7 @@ POST http://localhost:8080/api/auth/logout
 X-Api-Key: secret
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer eyJzdWIiOiJlYWVkNjI3Yy0wMWI0LTQ5NjEtOGZhNy1kMTFkODk3MDY4N2UiLCJ1c2VybmFtZSI6IkFuYXBoeWdvbiJ9
+Authorization: Bearer eyJzdWIiOiIyNmE2MzViMi0xZWQxLTQ5M2QtOGNiNi05MTQ2ZDQ3Nzg4ZTciLCJ1c2VybmFtZSI6IkFuYXBoeWdvbiJ9
 
 
 ### Request Reset Password

@@ -13,9 +13,9 @@ class EmailService(private val mailSender: JavaMailSender) {
 
     fun sendOtp(email: String, otp: String) {
         val smtpUsername = dotenv["SMTP_USERNAME"] ?: "lisvindanu015@gmail.com"
-        val smtpPassword = dotenv["SMTP_PASSWORD"] ?: "ynpg wwzi lenc lmze"
+        val smtpPassword = dotenv["SMTP_PASSWORD"] ?: "rqln oqhz xppv yfpc"
         val smtpHost = dotenv["SMTP_HOST"] ?: "smtp.gmail.com"
-        val smtpPort = dotenv["SMTP_PORT"]?.toInt() ?: 2525
+        val smtpPort = dotenv["SMTP_PORT"]?.toInt() ?: 587
 
         // Ensure that mailSender is configured properly
         val javaMailSender = mailSender as JavaMailSenderImpl

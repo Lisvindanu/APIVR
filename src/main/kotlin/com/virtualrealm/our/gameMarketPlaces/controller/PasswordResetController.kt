@@ -32,10 +32,13 @@ class PasswordResetController(
         }
 
         // Check if the user exists
-        val user = userRepository.findByEmail(email)
-            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+        val userOptional = userRepository.findByEmail(email)
+        if (!userOptional.isPresent) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 WebResponse(404, "error", null, "User not found")
             )
+        }
+        val user = userOptional.get()
 
         // Generate password reset token
         val resetToken = passwordResetService.generateResetToken(user.id!!)
@@ -56,6 +59,7 @@ class PasswordResetController(
         val token = body.token
         val newPassword = body.newPassword
 
+        // Validate and reset the password
         passwordResetService.resetPassword(token, newPassword)
         return ResponseEntity.ok(
             WebResponse(200, "success", "Password reset successful", "Your password has been reset")
