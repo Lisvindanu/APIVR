@@ -9,8 +9,8 @@ Content-Type: application/json
 X-Api-Key: secret
 
 {
-  "username": "Lisvindanu",
-  "email": "Lisvindanu@gmail.com",
+  "username": "example",
+  "email": "example@gmail.com",
   "password": "TestPassword123",
   "password_confirmation": "TestPassword123",
   "isGoogle": false,
@@ -24,9 +24,9 @@ X-Api-Key: secret
 Content-Type: application/json
 
 {
-  "email": "Lisvindanu@gmail.com",
+  "email": "example@gmail.com",
 
-  "otp": "529564"
+  "otp": "587123"
 }
 
 
@@ -37,8 +37,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "anaphygon@protonmail.com",
-  "password": "TestPassword123",
+  "email": "example@protonmail.com",
+  "password": "NewSecurePassword123",
   "isGoogle": false
 }
 
@@ -55,7 +55,7 @@ POST http://localhost:8080/api/auth/logout
 X-Api-Key: secret
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer eyJzdWIiOiIyNmE2MzViMi0xZWQxLTQ5M2QtOGNiNi05MTQ2ZDQ3Nzg4ZTciLCJ1c2VybmFtZSI6IkFuYXBoeWdvbiJ9
+Authorization: Bearer eyJzdWIiOiI1NzE0MzZlYi0wNjU4LTRiMWMtYmMzOS1mNjQ4MWZlOTEzMTgiLCJ1c2VybmFtZSI6Ikxpc3ZpbmRhbnUifQ==
 
 
 ### Request Reset Password
@@ -74,7 +74,7 @@ Content-Type: application/json
 X-Api-Key: secret
 
 {
-  "token": "474637",
+  "token": "434528",
   "newPassword": "NewSecurePassword123"
 }
 
