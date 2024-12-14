@@ -115,7 +115,7 @@ class ProductController(
             }
 
             val fileName = file.originalFilename ?: throw IllegalArgumentException("File name is required")
-            val relativePath = "/uploads/images/$fileName"  // Define the image path
+            val relativePath = "uploads/images/$fileName"  // Define the image path
             val filePath = Paths.get(uploadDir, fileName).toString()
             val imageFile = File(filePath)
             val directory = imageFile.parentFile
