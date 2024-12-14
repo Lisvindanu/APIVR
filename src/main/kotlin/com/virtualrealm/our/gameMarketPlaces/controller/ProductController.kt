@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException
 import java.io.File
 import java.nio.file.Paths
 
+
 @RestController
 @CrossOrigin
 @RequestMapping("/api/products")

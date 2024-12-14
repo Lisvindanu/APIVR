@@ -4,6 +4,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import io.github.cdimascio.dotenv.Dotenv
 
+@SpringBootApplication(scanBasePackages = ["com.virtualrealm.our.gameMarketPlaces"])
+class GameMarketPlacesApplication
+
 @SpringBootApplication
 class GamesStoreApplication
 
