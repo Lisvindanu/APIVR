@@ -18,19 +18,21 @@ import java.nio.file.Paths
 
 @RestController
 @CrossOrigin
-class ProductController(val productService: ProductService,
-                        val objectMapper: ObjectMapper,
-                        @Value("\${file.upload.dir}") val uploadDir: String) {
+@RequestMapping("/api/products")
+class ProductController(
+    private val productService: ProductService,
+    private val objectMapper: ObjectMapper,
+    @Value("\${file.upload.dir}") private val uploadDir: String
+) {
 
     @PostMapping(
-        value = ["/api/products"],
-        produces = ["application/json"],
-        consumes = ["multipart/form-data", "application/json"]
+        consumes = ["multipart/form-data", "application/json"],
+        produces = ["application/json"]
     )
     fun createProduct(
-        @RequestPart(value = "body", required = false) body: String?,  // Handle JSON body as a part
-        @RequestPart(value = "file", required = false) file: MultipartFile?,  // Handle file upload
-        @RequestHeader("X-Api-Key") apiKey: String  // API Key validation
+        @RequestPart(value = "body", required = false) body: String?,
+        @RequestPart(value = "file", required = false) file: MultipartFile?,
+        @RequestHeader("X-Api-Key") apiKey: String
     ): WebResponse<ProductResponse> {
         // If the body part is provided, convert it to CreateProductRequest
         val createProductRequest = body?.let {
@@ -72,10 +74,10 @@ class ProductController(val productService: ProductService,
         }
     }
 
-    @PutMapping(value = ["/api/products/{id}"], consumes = ["multipart/form-data"])
+    @PutMapping(value = ["/{id}"], consumes = ["multipart/form-data"])
     fun updateProduct(
         @PathVariable("id") id: Long,
-        @RequestPart("body") body: String?,  // JSON body as a String
+        @RequestPart("body") body: String?,
         @RequestPart(value = "file", required = false) file: MultipartFile?,
         @RequestHeader("X-Api-Key") apiKey: String
     ): WebResponse<ProductResponse> {
@@ -127,11 +129,11 @@ class ProductController(val productService: ProductService,
         return updateProductRequest.imageUrl ?: "/uploads/images/default-image.jpg"
     }
 
-    @DeleteMapping(
-        value = ["/api/products/{id}"],
-        produces = ["application/json"]
-    )
-    fun deleteProduct(@PathVariable("id") id: Long, @RequestHeader("X-Api-Key") apiKey: String): WebResponse<Long> {
+    @DeleteMapping(value = ["/{id}"], produces = ["application/json"])
+    fun deleteProduct(
+        @PathVariable("id") id: Long,
+        @RequestHeader("X-Api-Key") apiKey: String
+    ): WebResponse<Long> {
         productService.delete(id)
         return WebResponse(
             code = 200,
@@ -140,10 +142,7 @@ class ProductController(val productService: ProductService,
         )
     }
 
-    @GetMapping(
-        value = ["/api/products"],
-        produces = ["application/json"]
-    )
+    @GetMapping(produces = ["application/json"])
     fun listProducts(
         @RequestParam(value = "size", defaultValue = "10") size: Int,
         @RequestParam(value = "page", defaultValue = "0") page: Int,
@@ -158,10 +157,7 @@ class ProductController(val productService: ProductService,
         )
     }
 
-    @GetMapping(
-        value = ["/api/products/{id}"],
-        produces = ["application/json"]
-    )
+    @GetMapping(value = ["/{id}"], produces = ["application/json"])
     fun getProductById(
         @PathVariable("id") id: Long,
         @RequestHeader("X-Api-Key") apiKey: String
