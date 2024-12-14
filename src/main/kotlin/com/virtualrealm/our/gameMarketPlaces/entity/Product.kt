@@ -25,5 +25,16 @@ data class Product(
 
     @Column(name = "updated_at", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    var updatedAt: Date
+    var updatedAt: Date,
+
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    var category: Category,
+
+    @ManyToOne
+    @JoinColumn(name = "genre_id", nullable = true)
+    var genre: Genre? = null, // Genre opsional, hanya berlaku jika kategori adalah "Game"
+
+    @Column(name = "image_url")  // Optional field for storing image URL
+    var imageUrl: String? = null
 )

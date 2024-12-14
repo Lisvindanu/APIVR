@@ -1,4 +1,4 @@
 package com.virtualrealm.our.gameMarketPlaces.error
 
-class NotFoundException: Exception() {
+class NotFoundException(message: String? = null) : RuntimeException(message){
 }
