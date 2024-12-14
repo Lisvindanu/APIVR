@@ -11,6 +11,7 @@ import com.virtualrealm.our.gameMarketPlaces.repository.GenreRepository
 import com.virtualrealm.our.gameMarketPlaces.repository.ProductRepository
 import com.virtualrealm.our.gameMarketPlaces.service.ProductService
 import com.virtualrealm.our.gameMarketPlaces.validation.ValidationUtil
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
@@ -23,7 +24,7 @@ import java.util.*
 import java.util.stream.Collectors
 
 @Service
-class ProductServiceImpl(
+class ProductServiceImpl @Autowired constructor(
     val productRepository: ProductRepository,
     val validationUtil: ValidationUtil,
     val categoryRepository: CategoryRepository,
