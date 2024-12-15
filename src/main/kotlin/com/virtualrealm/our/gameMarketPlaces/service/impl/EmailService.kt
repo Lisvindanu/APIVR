@@ -43,7 +43,7 @@ class EmailService(private val mailSender: JavaMailSender) {
         javaMailSender.username = smtpUsername
         javaMailSender.password = smtpPassword
 
-        val resetLink = "https://your-app.com/reset-password?token=$token"
+        val resetLink = "http://127.0.0.1:8000/show-reset-password?token=$token"
 
         val message = SimpleMailMessage()
         message.setTo(email)

@@ -59,7 +59,7 @@ Authorization: Bearer eyJzdWIiOiI1NzE0MzZlYi0wNjU4LTRiMWMtYmMzOS1mNjQ4MWZlOTEzMT
 
 
 ### Request Reset Password
-POST http://localhost:8080/api/auth/request-reset
+POST https://virtual-realm-b8a13cc57b6c.herokuapp.com/api/auth/request-reset
 Content-Type: application/json
 X-Api-Key: secret
 
@@ -69,12 +69,12 @@ X-Api-Key: secret
 
 ### Reset Password
 
-POST http://localhost:8080/api/auth/reset-password
+POST  https://virtual-realm-b8a13cc57b6c.herokuapp.com/api/auth/reset-password
 Content-Type: application/json
 X-Api-Key: secret
 
 {
-  "token": "434528",
+  "token": "710002",
   "newPassword": "NewSecurePassword123"
 }
 
