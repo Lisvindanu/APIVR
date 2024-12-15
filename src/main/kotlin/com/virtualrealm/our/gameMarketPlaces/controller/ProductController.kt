@@ -116,19 +116,20 @@ class ProductController(
             }
 
             val fileName = file.originalFilename ?: throw IllegalArgumentException("File name is required")
-            val relativePath = "uploads/images/$fileName"  // Define the image path
-            val filePath = Paths.get(uploadDir, fileName).toString()
+            val relativePath = "uploads/images/$fileName"  // Path relatif ke folder yang diatur di Spring
+            val filePath = Paths.get(uploadDir, fileName).toString()  // `uploadDir` adalah path yang dikonfigurasi sebelumnya
             val imageFile = File(filePath)
             val directory = imageFile.parentFile
             if (!directory.exists()) {
                 directory.mkdirs()
             }
-            file.transferTo(imageFile) // Save file
-            return relativePath
+            file.transferTo(imageFile) // Save the file to the local directory
+            return relativePath // Return the relative path to the file
         }
         // Return default image URL if no file is uploaded
         return updateProductRequest.imageUrl ?: "/uploads/images/default-image.jpg"
     }
+
 
     @DeleteMapping(value = ["/{id}"], produces = ["application/json"])
     fun deleteProduct(
