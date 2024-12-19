@@ -1,3 +1,4 @@
+//heroku
 package com.virtualrealm.our.gameMarketPlaces.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -76,7 +77,7 @@ class ProductController(
 //    }
 
     @PostMapping(
-        value = ["/api/products"],
+//        value = ["/api/products"],
         produces = ["application/json"],
         consumes = ["multipart/form-data"]
     )
