@@ -60,7 +60,7 @@ class ProductServiceImpl(
         // Handle file upload using FTP
         val imageUrl: String = file?.let {
             val fileName = it.originalFilename ?: throw IllegalArgumentException("File name is required")
-            val remoteFilePath = "uploads/images/$fileName"
+            val remoteFilePath = "/uploads/images/$fileName"
 
             // Upload to FTP server
             val uploadSuccess = ftpService.uploadFileToFtp(
