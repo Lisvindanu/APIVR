@@ -188,7 +188,7 @@ class ProductController(
         productService.delete(id)
         return WebResponse(
             code = 200,
-            status = "success",
+            status = "successs",
             data = id
         )
     }
