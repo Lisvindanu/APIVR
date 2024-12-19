@@ -50,7 +50,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
 
 	runtimeOnly("com.mysql:mysql-connector-j")
