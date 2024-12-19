@@ -96,7 +96,8 @@ class FtpService {
             }
             println("Login successful!")
 
-            ftpClient.enterLocalActiveMode()
+//            ftpClient.enterLocalActiveMode()
+            ftpClient.enterLocalPassiveMode()
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE)
 
             // Set working directory directly to the target path
