@@ -9,16 +9,15 @@ class GameMarketPlacesApplication
 
 @SpringBootApplication
 class GamesStoreApplication
-
 fun main(args: Array<String>) {
 	// Load environment variables from .env file
 	val dotenv = Dotenv.configure().load()
 
 	// Check for missing keys and log a clear error message
 	val requiredKeys = listOf(
-		"STACKHERO_MARIADB_DATABASE_URL", "STACKHERO_MARIADB_ROOT_USERNAME", "STACKHERO_MARIADB_ROOT_PASSWORD",
+		"DATABASE_URL", "DATABASE_USERNAME", "DATABASE_PASSWORD",
 		"SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD",
-		"GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI"
+		"GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI", "FTP_SERVER", "FTP_PORT", "FTP_USERNAME", "FTP_PASSWORD",
 	)
 	val missingKeys = requiredKeys.filter { dotenv[it].isNullOrBlank() }
 

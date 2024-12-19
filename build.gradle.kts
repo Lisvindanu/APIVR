@@ -20,6 +20,9 @@ repositories {
 }
 
 dependencies {
+	implementation("org.springframework.integration:spring-integration-ftp:6.4.0")
+	// https://mvnrepository.com/artifact/commons-net/commons-net
+	implementation("commons-net:commons-net:3.11.1")
 	implementation("org.apache.tika:tika-core:2.8.0")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -47,12 +50,16 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 
+
+
+
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 }
+
 kotlin {
 	compilerOptions {
 		freeCompilerArgs.addAll("-Xjsr305=strict")

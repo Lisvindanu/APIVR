@@ -24,30 +24,28 @@ import java.util.*
 import java.util.stream.Collectors
 
 
+
 @Service
-class ProductServiceImpl @Autowired constructor(
+class ProductServiceImpl(
     val productRepository: ProductRepository,
     val validationUtil: ValidationUtil,
     val categoryRepository: CategoryRepository,
     val genreRepository: GenreRepository,
-    @Value("\${file.upload.dir}") val uploadDir: String
+    @Value("\${file.upload.dir}") val uploadDir: String,
+    val ftpService: FtpService,  // Add FtpService
+    @Value("\${ftp.server}") val ftpServer: String,  // Add FTP configuration
+    @Value("\${ftp.port}") val ftpPort: Int,
+    @Value("\${ftp.username}") val ftpUsername: String,
+    @Value("\${ftp.password}") val ftpPassword: String,
 ) : ProductService {
 
     override fun create(createProductRequest: CreateProductRequest, file: MultipartFile?): ProductResponse {
-        // Validate the product request
         validationUtil.validate(createProductRequest)
 
-        // Check if categoryId is not null
-        val categoryId = createProductRequest.categoryId
-        if (categoryId == null) {
-            throw IllegalArgumentException("Category ID must be provided")
-        }
-
-        // Get the category from the repository
+        val categoryId = createProductRequest.categoryId ?: throw IllegalArgumentException("Category ID must be provided")
         val category = categoryRepository.findByIdOrNull(categoryId)
             ?: throw NotFoundException("Category with ID $categoryId not found")
 
-        // Optional: Validate genre within the category if genreId is provided
         val genre = createProductRequest.genreId?.let {
             val genreEntity = genreRepository.findByIdOrNull(it)
                 ?: throw NotFoundException("Genre with ID $it not found")
@@ -57,22 +55,28 @@ class ProductServiceImpl @Autowired constructor(
             genreEntity
         }
 
-        // Handle the file upload and save image URL or set "null" if no file is uploaded
+        // Handle file upload using FTP
         val imageUrl: String = file?.let {
             val fileName = it.originalFilename ?: throw IllegalArgumentException("File name is required")
-            val relativePath = "uploads/images/$fileName"  // Use the relative URL path
-            val filePath = Paths.get(uploadDir, fileName).toString()
-            val imageFile = File(filePath)
-            val directory = imageFile.parentFile
-            if (!directory.exists()) {
-                directory.mkdirs()
+            val remoteFilePath = "uploads/images/$fileName"
+
+            // Upload to FTP server
+            val uploadSuccess = ftpService.uploadFileToFtp(
+                ftpServer,
+                ftpPort,
+                ftpUsername,
+                ftpPassword,
+                it,
+                remoteFilePath
+            )
+
+            if (!uploadSuccess) {
+                throw RuntimeException("Failed to upload file to FTP server")
             }
-            it.transferTo(imageFile)
-            relativePath // Store relative path in database
-        } ?: "null"  // If no file is uploaded, assign "null"
 
+            "/uploads/images/$fileName"  // Return the URL path
+        } ?: "null"
 
-        // Ensure all values are valid before creating the product
         val name = createProductRequest.name
         val price = createProductRequest.price
         val quantity = createProductRequest.quantity
@@ -81,9 +85,8 @@ class ProductServiceImpl @Autowired constructor(
             throw IllegalArgumentException("Product name, price, and quantity must be provided")
         }
 
-        // Create the product object
         val product = Product(
-            id = createProductRequest.id,  // Assuming the ID is generated automatically
+            id = createProductRequest.id,
             name = name,
             price = price,
             quantity = quantity,
@@ -91,13 +94,10 @@ class ProductServiceImpl @Autowired constructor(
             genre = genre,
             createdAt = Date(),
             updatedAt = Date(),
-            imageUrl = imageUrl // Set the image URL (can be "null" if no file uploaded)
+            imageUrl = imageUrl
         )
 
-        // Save product to the repository
         productRepository.save(product)
-
-        // Return the product response
         return convertProductToProductResponse(product)
     }
 
