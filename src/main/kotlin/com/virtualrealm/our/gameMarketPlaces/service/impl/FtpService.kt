@@ -253,7 +253,7 @@ class FtpService {
 
             // Always use passive mode for Heroku compatibility
             println("Entering passive mode")
-            ftpClient.enterLocalPassiveMode()
+            ftpClient.enterLocalActiveMode()
 
             // Configure data connection settings
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE)
