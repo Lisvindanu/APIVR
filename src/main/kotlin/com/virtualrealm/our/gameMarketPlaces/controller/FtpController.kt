@@ -82,6 +82,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/ftp")
 class FtpController(private val ftpService: FtpService) {
 
+
     @PostMapping("/test-login")
     suspend fun testFtpLogin(
         @RequestParam server: String,

@@ -327,4 +327,45 @@ redirect_uri=http://localhost:8080/login/oauth2/code/google
 GET https://www.googleapis.com/oauth2/v3/userinfo
 Authorization: Bearer {access_token}
 
+### Test Login ke FTP
+POST http://localhost:8080/ftp/test-login
+Content-Type: application/x-www-form-urlencoded
+X-Api-Key: secret
 
+server=virtual-realm.my.id&port=21&username=virtual6&password=Lisvindanu15082004
+
+###
+
+### List Directory di FTP
+GET http://localhost:8080/ftp/list-directory?server=virtual-realm.my.id&port=21&username=virtual6&password=Lisvindanu15082004&directory=/uploads/images
+Content-Type: application/x-www-form-urlencoded
+X-Api-Key: secret
+
+
+### Upload File ke FTP
+POST http://localhost:8080/ftp/upload-file
+Content-Type: multipart/form-data
+X-Api-Key: secret
+
+--boundary
+Content-Disposition: form-data; name="server"
+
+virtual-realm.my.id
+--boundary
+Content-Disposition: form-data; name="port"
+
+21
+--boundary
+Content-Disposition: form-data; name="username"
+
+virtual6
+--boundary
+Content-Disposition: form-data; name="password"
+
+Lisvindanu15082004
+--boundary
+Content-Disposition: form-data; name="file"; filename="Ippo.jpeg"
+Content-Type: image/jpeg
+
+<content biner asli file>
+--boundary--

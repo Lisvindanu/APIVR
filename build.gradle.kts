@@ -24,7 +24,6 @@ dependencies {
 	// https://mvnrepository.com/artifact/commons-net/commons-net
 	implementation("commons-net:commons-net:3.11.1")
 	implementation("org.apache.tika:tika-core:2.8.0")
-	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter")
@@ -37,7 +36,6 @@ dependencies {
 	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
 	implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
 	implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
-	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 	implementation("com.google.oauth-client:google-oauth-client:1.34.0")
 	implementation("io.github.cdimascio:dotenv-kotlin:6.4.0")
 	implementation("io.github.cdimascio:dotenv-java:3.0.2")

@@ -146,6 +146,88 @@ class FtpService {
 //        }
 //    }
 
+//    fun uploadFileToFtp(
+//        server: String,
+//        port: Int,
+//        username: String,
+//        password: String,
+//        file: MultipartFile,
+//        remoteFilePath: String
+//    ): Boolean {
+//        val ftpClient = FTPClient()
+//        println("=== Start FTP Upload Process ===")
+//
+//        return try {
+//            println("Connecting to FTP server: $server on port: $port")
+//            ftpClient.connect(server, port)
+//
+//            println("Logging in with username: $username")
+//            val loginResult = ftpClient.login(username, password)
+//            if (!loginResult) {
+//                println("Login failed: ${ftpClient.replyString}")
+//                return false
+//            }
+//            println("Login successful!")
+//
+//            // Coba masuk ke mode aktif terlebih dahulu
+//            println("Attempting to use ACTIVE mode")
+//            try {
+//                ftpClient.enterLocalActiveMode()
+//                println("ACTIVE mode activated successfully")
+//            } catch (e: Exception) {
+//                println("Failed to use ACTIVE mode: ${e.message}")
+//                println("Switching to PASSIVE mode")
+//                ftpClient.enterLocalPassiveMode()
+//            }
+//
+//            ftpClient.setFileType(FTP.BINARY_FILE_TYPE)
+//
+//            // Set working directory
+//            val targetDirectory = "domains/virtual-realm.my.id/public_html/uploads/images"
+//            val directoryExists = ftpClient.changeWorkingDirectory(targetDirectory)
+//
+//            if (!directoryExists) {
+//                println("Target directory $targetDirectory does not exist.")
+//                return false
+//            }
+//
+//            println("Changed working directory to: $targetDirectory")
+//
+//            // Ambil nama file dari remoteFilePath
+//            val fileName = remoteFilePath.substringAfterLast('/')
+//            println("Preparing to upload file: $fileName")
+//
+//            // Upload file
+//            val inputStream = ByteArrayInputStream(file.bytes)
+//            val result = ftpClient.storeFile(fileName, inputStream)
+//            inputStream.close()
+//
+//            if (result) {
+//                println("File uploaded successfully!")
+//            } else {
+//                println("Upload failed: ${ftpClient.replyString}")
+//            }
+//
+//            ftpClient.logout()
+//            println("Disconnected from FTP server.")
+//            result
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            println("FTP Error: ${e.message}")
+//            false
+//        } finally {
+//            if (ftpClient.isConnected) {
+//                try {
+//                    ftpClient.disconnect()
+//                    println("FTP connection closed.")
+//                } catch (ex: Exception) {
+//                    ex.printStackTrace()
+//                    println("Error closing FTP connection: ${ex.message}")
+//                }
+//            }
+//        }
+//    }
+
     fun uploadFileToFtp(
         server: String,
         port: Int,
@@ -169,18 +251,14 @@ class FtpService {
             }
             println("Login successful!")
 
-            // Coba masuk ke mode aktif terlebih dahulu
-            println("Attempting to use ACTIVE mode")
-            try {
-                ftpClient.enterLocalActiveMode()
-                println("ACTIVE mode activated successfully")
-            } catch (e: Exception) {
-                println("Failed to use ACTIVE mode: ${e.message}")
-                println("Switching to PASSIVE mode")
-                ftpClient.enterLocalPassiveMode()
-            }
+            // Always use passive mode for Heroku compatibility
+            println("Entering passive mode")
+            ftpClient.enterLocalPassiveMode()
 
+            // Configure data connection settings
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE)
+            ftpClient.bufferSize = 1024 * 1024  // 1MB buffer for better performance
+            ftpClient.setFileTransferMode(FTP.BINARY_FILE_TYPE)
 
             // Set working directory
             val targetDirectory = "domains/virtual-realm.my.id/public_html/uploads/images"
@@ -193,23 +271,34 @@ class FtpService {
 
             println("Changed working directory to: $targetDirectory")
 
-            // Ambil nama file dari remoteFilePath
+            // Get filename from remoteFilePath
             val fileName = remoteFilePath.substringAfterLast('/')
             println("Preparing to upload file: $fileName")
 
-            // Upload file
-            val inputStream = ByteArrayInputStream(file.bytes)
-            val result = ftpClient.storeFile(fileName, inputStream)
-            inputStream.close()
+            // Upload file with retry mechanism
+            var attempts = 0
+            var result = false
+            while (attempts < 3 && !result) {
+                attempts++
+                println("Upload attempt $attempts of 3")
 
-            if (result) {
-                println("File uploaded successfully!")
-            } else {
-                println("Upload failed: ${ftpClient.replyString}")
+                val inputStream = ByteArrayInputStream(file.bytes)
+                result = ftpClient.storeFile(fileName, inputStream)
+                inputStream.close()
+
+                if (result) {
+                    println("File uploaded successfully!")
+                } else {
+                    println("Upload attempt $attempts failed: ${ftpClient.replyString}")
+                    if (attempts < 3) {
+                        println("Retrying in 1 second...")
+                        Thread.sleep(1000)
+                    }
+                }
             }
 
             ftpClient.logout()
-            println("Disconnected from FTP server.")
+            println("Logged out from FTP server.")
             result
         } catch (e: Exception) {
             e.printStackTrace()
@@ -227,7 +316,6 @@ class FtpService {
             }
         }
     }
-
 
 
     fun listDirectoriesInDirectory(server: String, port: Int, username: String, password: String, directory: String): List<String> {
