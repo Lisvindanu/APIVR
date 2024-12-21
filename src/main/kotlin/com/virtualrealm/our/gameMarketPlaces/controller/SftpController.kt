@@ -112,6 +112,7 @@ class SftpController(private val sftpService: SftpService) {
         }
     }
 
+
     @PostMapping("/upload-file")
     suspend fun uploadFileToSftp(
         @RequestParam server: String,
@@ -156,4 +157,6 @@ class SftpController(private val sftpService: SftpService) {
             mapOf("status" to "failure", "message" to "Failed to list directories or directory is empty")
         }
     }
+
+
 }

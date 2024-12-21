@@ -106,11 +106,11 @@ class ProductServiceImpl(
         return convertProductToProductResponse(product)
     }
 
-    override fun update(id: Long, updateProductRequest: UpdateProductRequest): ProductResponse {
+    override fun update(id: Long, updateProductRequest: UpdateProductRequest, file: MultipartFile?): ProductResponse {
         val product = findProductByIdOrThrowNotFound(id)
         validationUtil.validate(updateProductRequest)
 
-        // Fetch category and genre as in the create method
+        // Fetch category and genre
         val category = updateProductRequest.categoryId?.let {
             categoryRepository.findByIdOrNull(it) ?: throw NotFoundException("Category not found")
         } ?: product.category
@@ -123,8 +123,27 @@ class ProductServiceImpl(
             genreEntity
         } ?: product.genre
 
-        // Update the image URL if provided, otherwise retain the existing one
-        val imageUrl = updateProductRequest.imageUrl ?: product.imageUrl  // This is the line you need to add
+        // Handle file upload using sftp if a new file is provided
+        val imageUrl = file?.let {
+            val fileName = it.originalFilename ?: throw IllegalArgumentException("File name is required")
+            val remoteFilePath = "/uploads/images/$fileName"
+
+            // Upload to sftp server
+            val uploadSuccess = sftpService.uploadFileToSftp(
+                sftpServer,
+                sftpPort,
+                sftpUsername,
+                sftpPassword,
+                it,
+                remoteFilePath
+            )
+
+            if (!uploadSuccess) {
+                throw RuntimeException("Failed to upload file to sftp server")
+            }
+
+            "/uploads/images/$fileName"  // Return the URL path
+        } ?: product.imageUrl // Keep existing image URL if no new file is uploaded
 
         product.apply {
             name = updateProductRequest.name!!
@@ -132,7 +151,7 @@ class ProductServiceImpl(
             quantity = updateProductRequest.quantity!!
             this.category = category
             this.genre = genre
-            this.imageUrl = imageUrl // Update the image URL
+            this.imageUrl = imageUrl
             updatedAt = Date()
         }
 

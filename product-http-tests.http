@@ -1,0 +1,111 @@
+### Variables
+@baseUrl = http://localhost:32451
+@apiKey = secret
+@productId = 24
+
+### Create Product with Image
+POST {{baseUrl}}/api/products
+X-Api-Key: {{apiKey}}
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary
+
+--WebKitFormBoundary
+Content-Disposition: form-data; name="body"
+
+{
+    "name": "Meteran Digital",
+    "price": 150000,
+    "quantity": 10,
+    "categoryId": 1,
+    "genreId": null
+}
+--WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="meteran.jpg"
+Content-Type: image/jpeg
+
+< ./uploads/images/meteran.jpg
+--WebKitFormBoundary--
+
+### Create Product without Image
+POST {{baseUrl}}/api/products
+X-Api-Key: {{apiKey}}
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary
+
+--WebKitFormBoundary
+Content-Disposition: form-data; name="body"
+
+{
+    "name": "Digital Product",
+    "price": 100000,
+    "quantity": 5,
+    "categoryId": 1,
+    "genreId": null
+}
+--WebKitFormBoundary--
+
+### Update Product with Image
+PUT {{baseUrl}}/api/products/{{productId}}
+X-Api-Key: {{apiKey}}
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary
+
+--WebKitFormBoundary
+Content-Disposition: form-data; name="body"
+
+{
+    "name": "Updated Meteran Digital",
+    "price": 200000,
+    "quantity": 15,
+    "categoryId": 1,
+    "genreId": null
+}
+--WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="fruitpeel.jpg"
+Content-Type: image/jpeg
+
+< ./uploads/images/fruitpeel.png
+--WebKitFormBoundary--
+
+### Update Product without Image
+PUT {{baseUrl}}/api/products/{{productId}}
+X-Api-Key: {{apiKey}}
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary
+
+--WebKitFormBoundary
+Content-Disposition: form-data; name="body"
+
+{
+    "name": "Updated Digital Product",
+    "price": 250000,
+    "quantity": 20,
+    "categoryId": 1,
+    "genreId": 2
+}
+--WebKitFormBoundary--
+
+### Update Product with Null Genre
+PUT {{baseUrl}}/api/products/{{productId}}
+X-Api-Key: {{apiKey}}
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary
+
+--WebKitFormBoundary
+Content-Disposition: form-data; name="body"
+
+{
+    "name": "Product No Genre",
+    "price": 300000,
+    "quantity": 25,
+    "categoryId": 1,
+    "genreId": null
+}
+--WebKitFormBoundary--
+
+### Get Product by ID
+GET {{baseUrl}}/api/products/{{productId}}
+X-Api-Key: {{apiKey}}
+
+### List Products
+GET {{baseUrl}}/api/products?page=0&size=10
+X-Api-Key: {{apiKey}}
+
+### Delete Product
+DELETE {{baseUrl}}/api/products/{{productId}}
+X-Api-Key: {{apiKey}}

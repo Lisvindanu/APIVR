@@ -128,31 +128,30 @@ class ProductController(
     @PutMapping(value = ["/{id}"], consumes = ["multipart/form-data"])
     fun updateProduct(
         @PathVariable("id") id: Long,
-        @RequestPart("body") body: String?,
+        @RequestPart("body") body: String,
         @RequestPart(value = "file", required = false) file: MultipartFile?,
         @RequestHeader("X-Api-Key") apiKey: String
     ): WebResponse<ProductResponse> {
-        return try {
-            val updateProductRequest = body?.let {
-                objectMapper.readValue(it, UpdateProductRequest::class.java)
-            } ?: throw IllegalArgumentException("Missing request body (either JSON or multipart)")
+        try {
+            val updateProductRequest = objectMapper.readValue(body, UpdateProductRequest::class.java)
 
-            // Handle file upload logic if a file is provided
-            val imageUrl = handleFileUpload(file, updateProductRequest)
+            // Validate file if present
+            file?.let {
+                val allowedTypes = listOf("image/png", "image/jpeg", "image/jpg", "image/svg+xml")
+                if (!allowedTypes.contains(it.contentType)) {
+                    throw IllegalArgumentException("Only image files (png, jpg, jpeg, svg) are allowed")
+                }
+            }
 
-            // Update the product with the file information (if any)
-            val productResponse = productService.update(id, updateProductRequest.copy(imageUrl = imageUrl))
+            val productResponse = productService.update(id, updateProductRequest, file)
 
-            WebResponse(
+            return WebResponse(
                 code = 200,
                 status = "success",
                 data = productResponse
             )
-        } catch (e: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message ?: "Invalid request")
         } catch (e: Exception) {
-            e.printStackTrace() // Log the stack trace
-            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while updating the product: ${e.message}")
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message ?: "Invalid request")
         }
     }
 

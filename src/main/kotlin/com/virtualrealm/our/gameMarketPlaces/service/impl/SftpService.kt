@@ -58,8 +58,13 @@ class SftpService {
             channelSftp = getChannelSftp(server, port, username, password)
             if (channelSftp != null) {
                 println("Login successful")
-                channelSftp.cd(directory)
-                println("Changed working directory to: $directory")
+                try {
+                    channelSftp.cd(directory)
+                    println("Changed working directory to: $directory")
+                } catch (e: SftpException) {
+                    println("Error changing directory: ${e.message}")
+                    return fileList
+                }
 
                 val entries = channelSftp.ls(directory) as Vector<ChannelSftp.LsEntry>
                 for (entry in entries) {
@@ -89,6 +94,7 @@ class SftpService {
         }
         return fileList
     }
+
 
     fun uploadFileToSftp(
         server: String,
