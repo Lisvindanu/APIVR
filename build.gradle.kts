@@ -50,6 +50,8 @@ dependencies {
 
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+// https://mvnrepository.com/artifact/com.jcraft/jsch
+	implementation("com.jcraft:jsch:0.1.55")
 
 
 	runtimeOnly("com.mysql:mysql-connector-j")

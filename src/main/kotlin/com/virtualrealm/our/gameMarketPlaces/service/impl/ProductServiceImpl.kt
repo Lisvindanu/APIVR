@@ -13,14 +13,11 @@ import com.virtualrealm.our.gameMarketPlaces.repository.GenreRepository
 import com.virtualrealm.our.gameMarketPlaces.repository.ProductRepository
 import com.virtualrealm.our.gameMarketPlaces.service.ProductService
 import com.virtualrealm.our.gameMarketPlaces.validation.ValidationUtil
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import java.io.File
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.stream.Collectors
@@ -34,11 +31,11 @@ class ProductServiceImpl(
     val categoryRepository: CategoryRepository,
     val genreRepository: GenreRepository,
     @Value("\${file.upload.dir}") val uploadDir: String,
-    val ftpService: FtpService,  // Add FtpService
-    @Value("\${ftp.server}") val ftpServer: String,  // Add FTP configuration
-    @Value("\${ftp.port}") val ftpPort: Int,
-    @Value("\${ftp.username}") val ftpUsername: String,
-    @Value("\${ftp.password}") val ftpPassword: String,
+    val sftpService: SftpService,  // Add FtpService
+    @Value("\${sftp.server}") val sftpServer: String,  // Add sftp configuration
+    @Value("\${sftp.port}") val sftpPort: Int,
+    @Value("\${sftp.username}") val sftpUsername: String,
+    @Value("\${sftp.password}") val sftpPassword: String,
 ) : ProductService {
 
     override fun create(createProductRequest: CreateProductRequest, file: MultipartFile?): ProductResponse {
@@ -57,23 +54,23 @@ class ProductServiceImpl(
             genreEntity
         }
 
-        // Handle file upload using FTP
+        // Handle file upload using sftp
         val imageUrl: String = file?.let {
             val fileName = it.originalFilename ?: throw IllegalArgumentException("File name is required")
             val remoteFilePath = "/uploads/images/$fileName"
 
-            // Upload to FTP server
-            val uploadSuccess = ftpService.uploadFileToFtp(
-                ftpServer,
-                ftpPort,
-                ftpUsername,
-                ftpPassword,
+            // Upload to sftp server
+            val uploadSuccess = sftpService.uploadFileToSftp(
+                sftpServer,
+                sftpPort,
+                sftpUsername,
+                sftpPassword,
                 it,
                 remoteFilePath
             )
 
             if (!uploadSuccess) {
-                throw RuntimeException("Failed to upload file to FTP server")
+                throw RuntimeException("Failed to upload file to sftp server")
             }
 
             "/uploads/images/$fileName"  // Return the URL path
