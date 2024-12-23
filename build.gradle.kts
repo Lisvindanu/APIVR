@@ -51,6 +51,7 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 // https://mvnrepository.com/artifact/com.jcraft/jsch
 	implementation("com.jcraft:jsch:0.1.55")
+	"developmentOnly"("org.springframework.boot:spring-boot-devtools")
 
 
 	runtimeOnly("com.mysql:mysql-connector-j")

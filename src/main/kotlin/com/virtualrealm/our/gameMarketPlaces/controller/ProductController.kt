@@ -27,54 +27,7 @@ class ProductController(
     @Value("\${file.upload.dir}") private val uploadDir: String
 ) {
 
-//    @PostMapping(
-//        consumes = ["multipart/form-data", "application/json"],
-//        produces = ["application/json"]
-//    )
-//    fun createProduct(
-//        @RequestPart(value = "body", required = false) body: String?,
-//        @RequestPart(value = "file", required = false) file: MultipartFile?,
-//        @RequestHeader("X-Api-Key") apiKey: String
-//    ): WebResponse<ProductResponse> {
-//        // If the body part is provided, convert it to CreateProductRequest
-//        val createProductRequest = body?.let {
-//            objectMapper.readValue(it, CreateProductRequest::class.java)
-//        } ?: throw IllegalArgumentException("Missing request body (either JSON or multipart)")
-//
-//        // Validate the request
-//        validateRequest(createProductRequest)
-//
-//        // Validate the file if present
-//        file?.let {
-//            val tika = Tika()
-//            val detectedType = tika.detect(it.inputStream)
-//            if (detectedType !in listOf("image/jpeg", "image/png")) {
-//                throw IllegalArgumentException("Unsupported file type: $detectedType")
-//            }
-//        }
-//
-//        // Process product creation
-//        val productResponse = productService.create(createProductRequest, file)
-//
-//        return WebResponse(
-//            code = 200,
-//            status = "success",
-//            data = productResponse
-//        )
-//    }
-//
-//    private fun validateRequest(request: CreateProductRequest) {
-//        val violations = mutableListOf<String>()
-//
-//        if (request.name.isNullOrBlank()) violations.add("Name must not be blank")
-//        if (request.price == null || request.price < 1) violations.add("Price must be at least 1")
-//        if (request.quantity == null || request.quantity < 0) violations.add("Quantity must not be negative")
-//        if (request.categoryId == null) violations.add("Category ID must not be null")
-//
-//        if (violations.isNotEmpty()) {
-//            throw IllegalArgumentException(violations.joinToString(", "))
-//        }
-//    }
+
 
     @PostMapping(
 //        value = ["/api/products"],

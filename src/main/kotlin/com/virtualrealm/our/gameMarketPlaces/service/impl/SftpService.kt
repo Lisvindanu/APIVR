@@ -132,9 +132,9 @@ class SftpService {
             // Upload file with retry mechanism
             var attempts = 0
             var result = false
-            while (attempts < 3 && !result) {
+            while (attempts < 4 && !result) {
                 attempts++
-                println("Upload attempt $attempts of 3")
+                println("Upload attempt $attempts of 4")
 
                 try {
                     val inputStream = ByteArrayInputStream(file.bytes)
@@ -144,7 +144,7 @@ class SftpService {
                     println("File uploaded successfully!")
                 } catch (e: Exception) {
                     println("Upload attempt $attempts failed: ${e.message}")
-                    if (attempts < 3) {
+                    if (attempts < 4) {
                         println("Retrying in 1 second...")
                         Thread.sleep(1000)
                     }
