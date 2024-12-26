@@ -75,8 +75,11 @@ class AuthServicesImpl  (
         val hashedPassword = password?.let { hashPassword(it) }
         val user = User(
             username = registerRequest.username,
+            fullname = registerRequest.fullname, // Add this
             email = registerRequest.email,
             password = hashedPassword ?: "",
+            imageUrl = registerRequest.imageUrl, // Add this
+            uuid = UUID.randomUUID().toString() // UUID will be auto-generated
         )
 
         logger.debug("Saving user: $user")
@@ -253,21 +256,22 @@ class AuthServicesImpl  (
     override fun getUserData(token: String): UserDataResponse {
         val userToken = tokenRepository.findByToken(token) ?: throw IllegalArgumentException("Invalid Token")
         val user = userToken.user ?: throw IllegalArgumentException("User not found")
-        return UserDataResponse(username = user.username, email = user.email, googleId = user.googleId ?: "N/A")
+        return UserDataResponse(
+            username = user.username,
+            fullname = user.fullname,
+            email = user.email,
+            googleId = user.googleId ?: "N/A",
+            imageUrl = user.imageUrl,
+            uuid = user.uuid
+        )
     }
 
+    @Transactional
     override fun logout(token: String) {
         val userToken = tokenRepository.findByToken(token)
         if (userToken != null) {
-            val user = userToken.user // Ambil objek User yang terkait dengan token
-
-            // Ubah status isOtpVerified pada user
-            user.isOtpVerified = false
-
-            // Simpan perubahan pada user
-            userRepository.save(user)
-
-            // Hapus token dari repository
+            userToken.isLoggedIn = false
+            tokenRepository.save(userToken)
             tokenRepository.delete(userToken)
         } else {
             throw IllegalArgumentException("Token not found")
@@ -291,14 +295,22 @@ class AuthServicesImpl  (
             val jsonResponse = objectMapper.readTree(responseBody)
 
             val username = jsonResponse["name"].asText()
+            val fullname = jsonResponse["name"].asText() // Google usually provides full name
             val email = jsonResponse["email"].asText()
             val googleId = jsonResponse["sub"].asText()
+            val imageUrl = jsonResponse["picture"].asText() // Google provides profile picture URL
 
             logger.debug("Google token received: $googleToken")
-            logger.debug("User data from Google: Username = $username, Email = $email,  Google ID = $googleId")
+            logger.debug("User data from Google: Username = $username, Email = $email, Google ID = $googleId")
 
-
-            return UserDataResponse(username = username, email = email, googleId = googleId)
+            return UserDataResponse(
+                username = username,
+                fullname = fullname,
+                email = email,
+                googleId = googleId,
+                imageUrl = imageUrl,
+                uuid = UUID.randomUUID().toString() // Generate a new UUID for Google users
+            )
         } else {
             throw IllegalArgumentException("Failed to fetch user data from Google: ${response.message}")
         }
@@ -403,7 +415,11 @@ class AuthServicesImpl  (
 
     override fun generateAndStoreToken(user: User): UserToken {
         val sub = UUID.randomUUID().toString()
-        val tokenPayLoad = mapOf("sub" to sub, "username" to user.username)
+        val tokenPayLoad = mapOf(
+            "sub" to sub,
+            "username" to user.username,
+            "fullname" to (user.fullname ?: user.username) // Include fullname in token
+        )
         val token = Base64.getEncoder().encodeToString(ObjectMapper().writeValueAsString(tokenPayLoad).toByteArray())
         val expiresAt = LocalDateTime.now().plusHours(1)
 
@@ -412,7 +428,8 @@ class AuthServicesImpl  (
             token = token,
             expiresAt = expiresAt,
             user = user,
-            sub = sub
+            sub = sub,
+            isLoggedIn = true // Set initial login status
         )
         tokenRepository.save(userToken)
         return userToken
@@ -475,4 +492,18 @@ class AuthServicesImpl  (
             email = user.email
         )
     }
+
+    override fun checkEmailExists(email: String): EmailCheckResponse {
+        val user = userRepository.findByEmail(email).orElse(null)
+        return EmailCheckResponse(
+            exists = user != null,
+            uuid = user?.id?.toString() ?: "",
+            fullname = user?.username ?: "",
+            username = user?.username ?: "",
+            email = email,
+            image = "", // You can add image handling if needed
+            isLoggedIn = false
+        )
+    }
 }
+

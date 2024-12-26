@@ -20,7 +20,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.bcrypt.BCrypt
 import org.springframework.stereotype.Controller
 import org.springframework.web.servlet.View
-import java.util.Base64
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.ExpiredJwtException
@@ -28,6 +27,7 @@ import io.jsonwebtoken.MalformedJwtException
 import io.jsonwebtoken.UnsupportedJwtException
 import io.jsonwebtoken.SignatureException
 import java.time.LocalDateTime
+import java.util.*
 
 
 @Controller
@@ -67,8 +67,11 @@ class AuthController(
         val user = userRepository.save(
             User(
                 username = request.username,
+                fullname = request.fullname, // tambah fullname
                 email = request.email,
-                password = hashedPassword
+                password = hashedPassword,
+                imageUrl = request.imageUrl, // tambah imageUrl
+                uuid = UUID.randomUUID().toString() // generate UUID
             )
         )
 
@@ -104,21 +107,27 @@ class AuthController(
                 )
             }
 
-            // Cek apakah pengguna sudah memiliki token yang masih berlaku
+            // Cek apakah pengguna sudah memiliki token yang masih aktif
             val existingToken = tokenRepository.findByUser(user)
-            if (existingToken != null && existingToken.expiresAt.isAfter(LocalDateTime.now())) {
-                logger.warn("User already logged in with token: ${user.username}")
+            if (existingToken != null && existingToken.expiresAt.isAfter(LocalDateTime.now()) && existingToken.isLoggedIn) {
+                logger.warn("User already logged in: ${user.username}")
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                     WebResponse(401, "error", null, "User is already logged in. Please logout first.")
                 )
             }
 
-            // Jika token tidak ada atau sudah kedaluwarsa, buat token baru
+            // Generate token baru
             val token = authServices.generateAndStoreToken(user)
 
             // Menyiapkan data respons
-            val responseData = LoginResponseData(token.token, token.expiresAt, "Login successful", "success")
-            return ResponseEntity.ok(WebResponse(
+            val responseData = LoginResponseData(
+                token = token.token,
+                expiresAt = token.expiresAt,
+                message = "Login successful",
+                status = "success"
+            )
+
+            ResponseEntity.ok(WebResponse(
                 code = 200,
                 status = "success",
                 data = responseData,
@@ -126,8 +135,7 @@ class AuthController(
             ))
 
         } catch (e: Exception) {
-            // Menangani kesalahan yang terjadi
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 WebResponse(500, "error", null, "An unexpected error occurred: ${e.message}")
             )
         }
@@ -211,11 +219,6 @@ class AuthController(
     fun getUserData(@RequestHeader("Authorization") authorization: String): ResponseEntity<WebResponse<UserDataResponse>> {
         val token = authorization.removePrefix("Bearer ").trim()
         try {
-            // Menggunakan URL-safe Base64 decoder
-            val decodedBytes = Base64.getUrlDecoder().decode(token)
-            val decodedString = String(decodedBytes)
-            logger.debug("Decoded token: $decodedString")
-
             val userData = authServices.getUserData(token)
             return ResponseEntity.ok(WebResponse(
                 code = 200,
@@ -227,7 +230,7 @@ class AuthController(
             return ResponseEntity.status(400).body(WebResponse(
                 code = 400,
                 status = "error",
-                data = null // data is nullable, so it can be set to null in error cases
+                data = null
             ))
         }
     }
@@ -238,39 +241,44 @@ class AuthController(
     fun googleOAuth2Callback(@RequestParam("code") code: String): ResponseEntity<WebResponse<String>> {
         logger.info("Received Google OAuth2 callback with code: $code")
         try {
-            // Exchange the authorization code for an access token
             val accessToken = authServices.exchangeAuthCodeForToken(code)
             logger.info("Exchanged auth code for token: $accessToken")
 
-            // Log the access token
-            logger.debug("Access token: $accessToken")
-
-            // Retrieve the OAuth2User using the access token
             val oauth2User = authServices.getOAuth2UserFromGoogleToken(accessToken)
             logger.info("Retrieved OAuth2 user from Google token: $oauth2User")
 
-            // Handle Google authentication and save user
+            // Handle Google authentication dengan field baru
             val user = authServices.handleGoogleAuthentication(oauth2User)
             logger.info("User handled and saved: $user")
 
-            // Redirect the user to the dashboard after successful authentication
             response.sendRedirect("http://localhost:5501/dashboard.html")
             return ResponseEntity.ok().build()
 
         } catch (e: Exception) {
             logger.error("OAuth2 authentication failed", e)
-            val errorResponse = WebResponse<String>(
-                code = 400,
-                status = "error",
-                data = "OAuth2 authentication failed: ${e.message}"
+            return ResponseEntity.status(400).body(
+                WebResponse(400, "error", null, "OAuth2 authentication failed: ${e.message}")
             )
-            return ResponseEntity.status(400).body(errorResponse)
         }
     }
+
 
     fun checkPassword(inputPassword: String, storedPassword: String): Boolean {
         // Contoh menggunakan bcrypt untuk membandingkan password
         return BCrypt.checkpw(inputPassword, storedPassword)
+    }
+
+    @GetMapping("/check-email")
+    fun checkEmail(@RequestParam email: String): ResponseEntity<WebResponse<EmailCheckResponse>> {
+        logger.info("Checking email existence: $email")
+        val result = authServices.checkEmailExists(email)
+
+        return ResponseEntity.ok(WebResponse(
+            code = 200,
+            status = "success",
+            data = result,
+            message = if (result.exists) "Email sudah terdaftar" else "Email tersedia"
+        ))
     }
 
 }

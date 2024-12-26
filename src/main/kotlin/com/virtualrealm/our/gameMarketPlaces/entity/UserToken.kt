@@ -24,5 +24,11 @@ data class UserToken(
     val user: User,
 
     @Column(name = "sub", unique = true)
-    val sub: String? = null
+    val sub: String? = null,
+
+
+    @Column(name = "is_logged_in")  // Menambahkan status login
+    var isLoggedIn: Boolean = true
+
+
 )

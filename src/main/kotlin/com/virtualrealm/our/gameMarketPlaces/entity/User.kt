@@ -14,6 +14,9 @@ data class User (
     @Column(name = "username", unique = true)
     var username: String,
 
+    @Column(name = "fullname")  // Menambahkan field fullname
+    var fullname: String? = null,
+
     @Column(name = "email")
     @field:NotBlank
     val email: String,
@@ -24,6 +27,9 @@ data class User (
     @Column(name = "googleId")
     val googleId: String? = null,
 
+    @Column(name = "image_url")  // Menambahkan field untuk avatar/image
+    var imageUrl: String? = null,
+
     @Column(name = "created_at")
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
@@ -31,5 +37,9 @@ data class User (
     var isOtpVerified: Boolean? = false,
 
     @Column(name = "role")
-    var role: String ?= "USER"
+    var role: String ?= "USER",
+
+    @Column(name = "uuid")  // Menambahkan UUID untuk identifier unik
+    var uuid: String = java.util.UUID.randomUUID().toString()
 )
+
