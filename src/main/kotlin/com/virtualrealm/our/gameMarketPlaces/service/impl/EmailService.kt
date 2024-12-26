@@ -32,8 +32,8 @@ class EmailService(private val mailSender: JavaMailSender) {
     }
 
     fun sendPasswordResetLink(email: String, token: String) {
-        val smtpUsername = dotenv["SMTP_USERNAME"]
-        val smtpPassword = dotenv["SMTP_PASSWORD"]
+        val smtpUsername = dotenv["SMTP_USERNAME"] ?: "retrogamea00@gmail.com"
+        val smtpPassword = dotenv["SMTP_PASSWORD"] ?: "ynbk xvjc paed szwv"
         val smtpHost = dotenv["SMTP_HOST"] ?: "smtp.gmail.com"
         val smtpPort = dotenv["SMTP_PORT"]?.toInt() ?: 587
         // Pastikan mailSender sudah dikonfigurasi dengan benar
