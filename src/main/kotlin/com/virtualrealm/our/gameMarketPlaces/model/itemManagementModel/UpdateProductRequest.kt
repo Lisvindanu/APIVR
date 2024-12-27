@@ -8,6 +8,10 @@ data class UpdateProductRequest(
     @field:NotBlank
     val name: String?,
 
+    val description: String?,
+
+    val specifications: String?,
+
     @field:NotNull
     @field:Min(1)
     val price: Long?,
@@ -16,9 +20,9 @@ data class UpdateProductRequest(
     @field:Min(0)
     val quantity: Int?,
 
-    val categoryId: Long?, // Optional, allows updating the category
+    val categoryId: Long?,
 
-    val genreId: Long?, // Optional, allows updating the genre
+    val genreIds: Set<Long>?,
 
-    val imageUrl: String? // Optional, for updating the image URL
+    val imageUrl: String?
 )

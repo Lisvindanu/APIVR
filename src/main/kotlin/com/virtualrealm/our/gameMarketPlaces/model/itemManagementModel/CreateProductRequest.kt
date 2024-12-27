@@ -5,11 +5,14 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 
 data class CreateProductRequest(
-
     val id: Long? = null,
 
     @field:NotBlank
     val name: String?,
+
+    val description: String?,
+
+    val specifications: String?,
 
     @field:NotNull
     @field:Min(value = 1)
@@ -22,5 +25,5 @@ data class CreateProductRequest(
     @field:NotNull(message = "Category ID must not be null")
     val categoryId: Long?,
 
-    val genreId: Long? // Opsional, hanya diperlukan untuk kategori tertentu (misalnya, Game)
+    val genreIds: Set<Long>? = null
 )

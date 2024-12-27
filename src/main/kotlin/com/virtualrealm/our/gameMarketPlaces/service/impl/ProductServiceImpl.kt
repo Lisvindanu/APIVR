@@ -4,6 +4,7 @@ package com.virtualrealm.our.gameMarketPlaces.service.impl
 
 import com.virtualrealm.our.gameMarketPlaces.entity.Product
 import com.virtualrealm.our.gameMarketPlaces.error.NotFoundException
+import com.virtualrealm.our.gameMarketPlaces.model.genre.GenreResponse
 import com.virtualrealm.our.gameMarketPlaces.model.itemManagementModel.CreateProductRequest
 import com.virtualrealm.our.gameMarketPlaces.model.itemManagementModel.ListProductRequest
 import com.virtualrealm.our.gameMarketPlaces.model.itemManagementModel.ProductResponse
@@ -45,14 +46,14 @@ class ProductServiceImpl(
         val category = categoryRepository.findByIdOrNull(categoryId)
             ?: throw NotFoundException("Category with ID $categoryId not found")
 
-        val genre = createProductRequest.genreId?.let {
-            val genreEntity = genreRepository.findByIdOrNull(it)
-                ?: throw NotFoundException("Genre with ID $it not found")
-            if (genreEntity.category.id != category.id) {
-                throw IllegalArgumentException("Genre ID $it does not belong to the selected category")
+        val genres = createProductRequest.genreIds?.map { genreId ->
+            val genre = genreRepository.findByIdOrNull(genreId)
+                ?: throw NotFoundException("Genre with ID $genreId not found")
+            if (genre.category.id != category.id) {
+                throw IllegalArgumentException("Genre ID $genreId does not belong to the selected category")
             }
-            genreEntity
-        }
+            genre
+        }?.toMutableSet() ?: mutableSetOf()
 
         // Handle file upload using sftp
         val imageUrl: String = file?.let {
@@ -86,11 +87,13 @@ class ProductServiceImpl(
 
         val product = Product(
             id = createProductRequest.id,
-            name = name,
-            price = price,
-            quantity = quantity,
+            name = createProductRequest.name ?: throw IllegalArgumentException("Name must be provided"),
+            description = createProductRequest.description,
+            specifications = createProductRequest.specifications,
+            price = createProductRequest.price ?: throw IllegalArgumentException("Price must be provided"),
+            quantity = createProductRequest.quantity ?: throw IllegalArgumentException("Quantity must be provided"),
             category = category,
-            genre = genre,
+            genres = genres,
             createdAt = Date(),
             updatedAt = Date(),
             imageUrl = imageUrl
@@ -115,13 +118,14 @@ class ProductServiceImpl(
             categoryRepository.findByIdOrNull(it) ?: throw NotFoundException("Category not found")
         } ?: product.category
 
-        val genre = updateProductRequest.genreId?.let {
-            val genreEntity = genreRepository.findByIdOrNull(it)
-            if (genreEntity == null || genreEntity.category.id != category.id) {
-                throw IllegalArgumentException("Invalid genre for the selected category")
+        val genres = updateProductRequest.genreIds?.map { genreId ->
+            val genre = genreRepository.findByIdOrNull(genreId)
+                ?: throw NotFoundException("Genre with ID $genreId not found")
+            if (genre.category.id != category.id) {
+                throw IllegalArgumentException("Genre ID $genreId does not belong to the selected category")
             }
-            genreEntity
-        } ?: product.genre
+            genre
+        }?.toMutableSet() ?: product.genres
 
         // Handle file upload using sftp if a new file is provided
         val imageUrl = file?.let {
@@ -147,10 +151,12 @@ class ProductServiceImpl(
 
         product.apply {
             name = updateProductRequest.name!!
+            description = updateProductRequest.description
+            specifications = updateProductRequest.specifications
             price = updateProductRequest.price!!
             quantity = updateProductRequest.quantity!!
             this.category = category
-            this.genre = genre
+            this.genres = genres
             this.imageUrl = imageUrl
             updatedAt = Date()
         }
@@ -179,15 +185,22 @@ class ProductServiceImpl(
         return ProductResponse(
             id = product.id,
             name = product.name,
+            description = product.description,
+            specifications = product.specifications,
             price = product.price,
             quantity = product.quantity,
             categoryId = product.category.id,
-            categoryName = product.category.name, // Get the category name
-            genreId = product.genre?.id,
-            genreName = product.genre?.name, // Get the genre name if available
+            categoryName = product.category.name,
+            genres = product.genres.map { genre ->
+                GenreResponse(
+                    id = genre.id!!,
+                    name = genre.name,
+                    categoryId = genre.category.id!!
+                )
+            },
             created_at = formatTimestamp(product.createdAt),
             updated_at = formatTimestamp(product.updatedAt),
-            imageUrl = product.imageUrl // Include the image URL in the response
+            imageUrl = product.imageUrl
         )
     }
 
@@ -201,19 +214,8 @@ class ProductServiceImpl(
         val product = productRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Product with ID $id not found") }
 
-        return ProductResponse(
-            id = product.id,
-            name = product.name,
-            price = product.price,
-            quantity = product.quantity,
-            categoryId = product.category?.id,
-            categoryName = product.category?.name,
-            genreId = product.genre?.id,
-            genreName = product.genre?.name,
-            created_at = product.createdAt.toString(),
-            updated_at = product.updatedAt.toString(),
-            imageUrl = product.imageUrl
-        )
+        return convertProductToProductResponse(product)
     }
+
 
 }

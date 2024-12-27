@@ -13,6 +13,12 @@ data class Product(
     @Column(name = "name", nullable = false)
     var name: String,
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    var description: String?,
+
+    @Column(name = "specifications", columnDefinition = "TEXT")
+    var specifications: String?,
+
     @Column(name = "price", nullable = false)
     var price: Long,
 
@@ -31,10 +37,14 @@ data class Product(
     @JoinColumn(name = "category_id", nullable = false)
     var category: Category,
 
-    @ManyToOne
-    @JoinColumn(name = "genre_id", nullable = true)
-    var genre: Genre? = null, // Genre opsional, hanya berlaku jika kategori adalah "Game"
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "product_genres",
+        joinColumns = [JoinColumn(name = "product_id")],
+        inverseJoinColumns = [JoinColumn(name = "genre_id")]
+    )
+    var genres: MutableSet<Genre> = mutableSetOf(),
 
-    @Column(name = "image_url")  // Optional field for storing image URL
+    @Column(name = "image_url")
     var imageUrl: String? = null
 )
