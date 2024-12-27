@@ -37,7 +37,7 @@ data class Product(
     @JoinColumn(name = "category_id", nullable = false)
     var category: Category,
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "product_genres",
         joinColumns = [JoinColumn(name = "product_id")],
