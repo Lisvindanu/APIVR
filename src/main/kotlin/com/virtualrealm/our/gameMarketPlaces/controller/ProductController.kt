@@ -58,8 +58,10 @@ class ProductController(
             return WebResponse(
                 code = 200,
                 status = "success",
-                data = productResponse
+                data = productResponse,
+                message = "Product successfully created."
             )
+
         } catch (e: Exception) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message ?: "Invalid request")
         }
@@ -101,8 +103,10 @@ class ProductController(
             return WebResponse(
                 code = 200,
                 status = "success",
-                data = productResponse
+                data = productResponse,
+                message = "Product successfully updated."
             )
+
         } catch (e: Exception) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message ?: "Invalid request")
         }
@@ -141,9 +145,11 @@ class ProductController(
         productService.delete(id)
         return WebResponse(
             code = 200,
-            status = "successs",
-            data = id
+            status = "success",
+            data = id,
+            message = "Product successfully deleted."
         )
+
     }
 
     @GetMapping(produces = ["application/json"])
@@ -157,8 +163,10 @@ class ProductController(
         return WebResponse(
             code = 200,
             status = "success",
-            data = response
+            data = response,
+            message = "Product list retrieved successfully."
         )
+
     }
 
     @GetMapping(value = ["/{id}"], produces = ["application/json"])
@@ -170,8 +178,10 @@ class ProductController(
         return WebResponse(
             code = 200,
             status = "success",
-            data = productResponse
+            data = productResponse,
+            message = "Product details retrieved successfully."
         )
+
     }
 
 }
