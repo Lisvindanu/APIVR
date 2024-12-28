@@ -51,4 +51,8 @@ class GenreService(
         }
         genreRepository.delete(genre)
     }
+
+    fun count(): Long {
+        return genreRepository.count()
+    }
 }

@@ -4,4 +4,6 @@ import com.virtualrealm.our.gameMarketPlaces.entity.Genre
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface GenreRepository : JpaRepository<Genre, Long> {
+    override fun count(): Long
+
 }

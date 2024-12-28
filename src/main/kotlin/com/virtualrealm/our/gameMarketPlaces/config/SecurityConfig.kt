@@ -46,7 +46,8 @@ class SecurityConfig : WebMvcConfigurer {
                     .requestMatchers("/api/auth/login", "/api/auth/login/oauth2/code/google",
                         "/api/auth/login/oauth2/code", "/api/auth/register", "/api/products", "/api/products/",
                         "/api/auth/logout", "/api/auth/login/oauth2/", "/api/purchases", "/api/**",
-                        "/api/inventory/use", "api/inventory", "api/payments/", "/sftp/**", "/runtime", "**/**", "actuator/**","/api/products/**" ).permitAll()
+                        "/api/inventory/use", "api/inventory", "api/payments/", "/sftp/**",
+                        "/runtime", "**/**", "actuator/**","/api/products/**", "api/categories/**", "api/genres/**" ).permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .anyRequest().authenticated()
             }

@@ -2,6 +2,7 @@ package com.virtualrealm.our.gameMarketPlaces.controller
 
 import com.virtualrealm.our.gameMarketPlaces.service.impl.CategoryService
 import com.virtualrealm.our.gameMarketPlaces.entity.Category
+import com.virtualrealm.our.gameMarketPlaces.model.WebResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -42,5 +43,17 @@ class CategoryController(private val categoryService: CategoryService) {
     fun deleteCategory(@PathVariable id: Long): ResponseEntity<Void> {
         categoryService.deleteCategory(id)
         return ResponseEntity.noContent().build()
+    }
+
+
+    @GetMapping("/count", produces = ["application/json"])
+    fun getCategoryCount(@RequestHeader("X-Api-Key") apiKey: String): WebResponse<Long> {
+        val count = categoryService.count()
+        return WebResponse(
+            code = 200,
+            status = "success",
+            data = count,
+            message = "Total category count retrieved successfully."
+        )
     }
 }

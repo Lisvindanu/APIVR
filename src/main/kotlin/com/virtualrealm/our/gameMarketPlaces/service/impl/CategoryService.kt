@@ -41,4 +41,9 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
         }
         categoryRepository.delete(category)
     }
+
+    fun count(): Long {
+        return categoryRepository.count()
+    }
+
 }

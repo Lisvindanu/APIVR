@@ -2,12 +2,17 @@ package com.virtualrealm.our.gameMarketPlaces.controller
 
 import com.virtualrealm.our.gameMarketPlaces.service.impl.GenreService
 import com.virtualrealm.our.gameMarketPlaces.entity.Genre
+import com.virtualrealm.our.gameMarketPlaces.model.WebResponse
+import com.virtualrealm.our.gameMarketPlaces.repository.GenreRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/genres")
-class GenreController(private val genreService: GenreService) {
+class GenreController(
+    private val genreService: GenreService,
+    private val genreRepository: GenreRepository
+) {
 
     // Menambah genre baru
     @PostMapping
@@ -42,5 +47,16 @@ class GenreController(private val genreService: GenreService) {
     fun deleteGenre(@PathVariable id: Long): ResponseEntity<Void> {
         genreService.deleteGenre(id)
         return ResponseEntity.noContent().build()
+    }
+
+    @GetMapping("/count", produces = ["application/json"])
+    fun getGenreCount(@RequestHeader("X-Api-Key") apiKey: String): WebResponse<Long> {
+        val count = genreService.count()
+        return WebResponse(
+            code = 200,
+            status = "success",
+            data = count,
+            message = "Total genre count retrieved successfully."
+        )
     }
 }
