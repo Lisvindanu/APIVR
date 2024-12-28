@@ -42,4 +42,12 @@ class UserServiceImpl(
     override fun findByGoogleId(googleId: String): User? {
         return userRepository.findByGoogleId(googleId)
     }
+
+    override fun getAllUsers(): List<User> {
+        return userRepository.findAll()
+    }
+
+    override fun getUsersByRole(role: String): List<User> {
+        return userRepository.findByRole(role)
+    }
 }

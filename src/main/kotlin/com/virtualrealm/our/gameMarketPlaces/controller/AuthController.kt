@@ -142,11 +142,6 @@ class AuthController(
     }
 
 
-
-
-
-
-
     @PostMapping("/send-otp")
     fun sendOtp(@RequestParam email: String): ResponseEntity<WebResponse<String>> {
         val user = userRepository.findByEmail(email).orElseThrow {
@@ -168,7 +163,6 @@ class AuthController(
             data = "OTP sent to $email"
         ))
     }
-
 
 
     @PostMapping("/verify-otp-regis")
@@ -199,7 +193,6 @@ class AuthController(
             message = OtpStatus.OTP_VERIFIED.message
         ))
     }
-
 
 
     @PostMapping("/logout")
@@ -280,5 +273,32 @@ class AuthController(
             message = if (result.exists) "Email sudah terdaftar" else "Email tersedia"
         ))
     }
+
+    @GetMapping("/users")
+    fun getAllUsers(): ResponseEntity<WebResponse<List<User>>> {
+        val users = userService.getAllUsers()
+        return ResponseEntity.ok(
+            WebResponse(
+                code = 200,
+                status = "success",
+                data = users,
+                message = "Successfully retrieved all users."
+            )
+        )
+    }
+
+    @GetMapping("/users/role")
+    fun getUsersByRole(@RequestParam role: String): ResponseEntity<WebResponse<List<User>>> {
+        val users = userService.getUsersByRole(role)
+        return ResponseEntity.ok(
+            WebResponse(
+                code = 200,
+                status = "success",
+                data = users,
+                message = "Successfully retrieved users with role: $role."
+            )
+        )
+    }
+
 
 }

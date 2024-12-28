@@ -3,10 +3,12 @@ package com.virtualrealm.our.gameMarketPlaces.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.virtualrealm.our.gameMarketPlaces.model.WebResponse
+import com.virtualrealm.our.gameMarketPlaces.model.genre.GenreResponse
 import com.virtualrealm.our.gameMarketPlaces.model.itemManagementModel.CreateProductRequest
 import com.virtualrealm.our.gameMarketPlaces.model.itemManagementModel.ListProductRequest
 import com.virtualrealm.our.gameMarketPlaces.model.itemManagementModel.ProductResponse
 import com.virtualrealm.our.gameMarketPlaces.model.itemManagementModel.UpdateProductRequest
+import com.virtualrealm.our.gameMarketPlaces.repository.GenreRepository
 import com.virtualrealm.our.gameMarketPlaces.service.ProductService
 import org.apache.tika.Tika
 import org.springframework.beans.factory.annotation.Value
@@ -30,7 +32,6 @@ class ProductController(
 
 
     @PostMapping(
-//        value = ["/api/products"],
         produces = ["application/json"],
         consumes = ["multipart/form-data"]
     )
@@ -183,5 +184,7 @@ class ProductController(
         )
 
     }
+
+
 
 }
