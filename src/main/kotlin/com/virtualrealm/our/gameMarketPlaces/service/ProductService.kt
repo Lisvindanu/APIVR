@@ -13,4 +13,5 @@ interface ProductService {
     fun delete(id: Long)
     fun list(listProductRequest: ListProductRequest) : List<ProductResponse>
     fun getById(id: Long): ProductResponse
+    fun count(): Long
 }

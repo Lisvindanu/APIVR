@@ -217,5 +217,7 @@ class ProductServiceImpl(
         return convertProductToProductResponse(product)
     }
 
-
+    override fun count(): Long {
+        return productRepository.count()
+    }
 }

@@ -185,6 +185,17 @@ class ProductController(
 
     }
 
-
+    @GetMapping("/count", produces = ["application/json"])
+    fun getProductCount(
+        @RequestHeader("X-Api-Key") apiKey: String
+    ): WebResponse<Long> {
+        val count = productService.count()
+        return WebResponse(
+            code = 200,
+            status = "success",
+            data = count,
+            message = "Total product count retrieved successfully."
+        )
+    }
 
 }
