@@ -8,5 +8,6 @@ data class LoginResponseData(
     val token: String? = null,
     val expiresAt: LocalDateTime? = null,
     val message: String? = null,
-    val status: String
+    val status: String,
+    val role: String? = null
 )

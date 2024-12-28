@@ -41,7 +41,7 @@ class AuthController(
     private val error: View,
     private val otpService: OtpService,
     private val emailService: EmailService,
-    private val tokenRepository: TokenRepository
+    private val tokenRepository: TokenRepository,
 ) {
     private val logger = LoggerFactory.getLogger(AuthServicesImpl::class.java)
 
@@ -124,7 +124,8 @@ class AuthController(
                 token = token.token,
                 expiresAt = token.expiresAt,
                 message = "Login successful",
-                status = "success"
+                status = "success",
+                role = user.role
             )
 
             ResponseEntity.ok(WebResponse(
