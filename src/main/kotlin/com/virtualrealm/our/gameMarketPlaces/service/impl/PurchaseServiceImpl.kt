@@ -14,22 +14,58 @@ class PurchaseServiceImpl @Autowired constructor(
     private val purchaseRepository: PurchaseRepository,
     private val productRepository: ProductRepository,
     private val userRepository: UserRepository,
-    repository: PurchaseRepository
-)
-    : PurchaseService {
+    private val inventoryRepository: InventoryRepository  // Tambahkan ini
+) : PurchaseService {
+
+    @Transactional  // Tambahkan anotasi ini untuk memastikan atomicity
     override fun createPurchase(request: PurchaseRequest): Purchase {
-        val product = productRepository.findById(request.productId).orElseThrow { RuntimeException("Product not found") }
-        val user = userRepository.findById(request.userId).orElseThrow { RuntimeException("User not found") } // Menambahkan user
+        // Validasi dan membuat purchase seperti sebelumnya
+        val product = productRepository.findById(request.productId)
+            .orElseThrow { RuntimeException("Product not found") }
+        val user = userRepository.findById(request.userId)
+            .orElseThrow { RuntimeException("User not found") }
+
+        // Cek stok produk
+        if (product.quantity < request.quantity) {
+            throw RuntimeException("Insufficient product stock")
+        }
+
+        // Kurangi stok produk
+        product.quantity -= request.quantity
+        productRepository.save(product)
+
+        // Buat purchase record
         val totalPrice = product.price * request.quantity
         val purchase = Purchase(
             user = user,
             product = product,
             quantity = request.quantity,
-            totalPrice = totalPrice,
+            totalPrice = totalPrice
         )
-        return purchaseRepository.save(purchase)
-    }
 
+        // Simpan purchase
+        val savedPurchase = purchaseRepository.save(purchase)
+
+        // Update atau buat inventory item
+        val existingInventory = inventoryRepository.findByUserIdAndProductId(user.id!!, product.id!!)
+        if (existingInventory != null) {
+            // Update existing inventory
+            existingInventory.quantity += request.quantity
+            existingInventory.lastUpdated = Date()
+            inventoryRepository.save(existingInventory)
+        } else {
+            // Create new inventory entry
+            val newInventory = Inventory(
+                user = user,
+                product = product,
+                quantity = request.quantity,
+                lastUpdated = Date()
+            )
+            inventoryRepository.save(newInventory)
+        }
+
+        return savedPurchase
+    }
     override fun getPurchaseHistory(userId: Long): List<Purchase> {
         return purchaseRepository.findByUserId(userId)
     }
