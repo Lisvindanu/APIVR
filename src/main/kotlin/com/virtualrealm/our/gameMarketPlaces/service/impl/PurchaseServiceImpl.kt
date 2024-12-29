@@ -1,13 +1,17 @@
 package com.virtualrealm.our.gameMarketPlaces.service.impl
 
+import com.virtualrealm.our.gameMarketPlaces.entity.Inventory
 import com.virtualrealm.our.gameMarketPlaces.entity.Purchase
 import com.virtualrealm.our.gameMarketPlaces.model.purchase.PurchaseRequest
+import com.virtualrealm.our.gameMarketPlaces.repository.InventoryRepository
 import com.virtualrealm.our.gameMarketPlaces.repository.ProductRepository
 import com.virtualrealm.our.gameMarketPlaces.repository.PurchaseRepository
 import com.virtualrealm.our.gameMarketPlaces.repository.UserRepository
 import com.virtualrealm.our.gameMarketPlaces.service.PurchaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.util.*
 
 @Service
 class PurchaseServiceImpl @Autowired constructor(
