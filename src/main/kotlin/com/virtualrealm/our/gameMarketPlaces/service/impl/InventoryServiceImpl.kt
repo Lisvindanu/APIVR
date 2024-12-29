@@ -5,7 +5,9 @@ import com.virtualrealm.our.gameMarketPlaces.model.inventory.InventoryItemRespon
 import com.virtualrealm.our.gameMarketPlaces.model.inventory.UseInventoryItemRequest
 import com.virtualrealm.our.gameMarketPlaces.repository.InventoryRepository
 import com.virtualrealm.our.gameMarketPlaces.service.InventoryServices
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -32,28 +34,71 @@ class InventoryServiceImpl(
         )
     }
 
+//    override fun useInventoryItem(request: UseInventoryItemRequest): GetUserInventoryItemResponse {
+//        val inventoryItem = inventoryRepository.findByUserIdAndProductId(request.userId, request.itemId)
+//            ?: throw IllegalArgumentException("Item not found in user's inventory")
+//
+//        if (inventoryItem.quantity < request.quantity) {
+//            throw IllegalArgumentException("Insufficient item quantity")
+//        }
+//
+//        val remainingQuantity = inventoryItem.quantity - request.quantity
+//        inventoryItem.apply {
+//            this.quantity = remainingQuantity
+//            this.lastUpdated = Date()
+//        }
+//
+//        inventoryRepository.save(inventoryItem)
+//
+//        val responseData = InventoryItemResponse(
+//            itemId = inventoryItem.product.id ?: -1,  // Menggunakan ID produk dari entitas Product
+//            name = inventoryItem.product.name,       // Menggunakan nama produk dari entitas Product
+//            quantity = remainingQuantity,
+//            lastUpdated = DateTimeFormatter.ISO_INSTANT.format(inventoryItem.lastUpdated.toInstant()),  // Format tanggal yang konsisten
+//            imageUrl = inventoryItem.product.imageUrl // Add image URL here
+//        )
+//
+//        return GetUserInventoryItemResponse(
+//            code = 200,
+//            status = "success",
+//            data = listOf(responseData)
+//        )
+//    }
+
     override fun useInventoryItem(request: UseInventoryItemRequest): GetUserInventoryItemResponse {
+        // Validasi input
+        if (request.userId <= 0 || request.itemId <= 0 || request.quantity <= 0) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid input: userId, itemId, and quantity must be positive numbers"
+            )
+        }
+
+        // Logika utama
         val inventoryItem = inventoryRepository.findByUserIdAndProductId(request.userId, request.itemId)
-            ?: throw IllegalArgumentException("Item not found in user's inventory")
+            ?: throw ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Item with ID ${request.itemId} not found in user's inventory"
+            )
 
         if (inventoryItem.quantity < request.quantity) {
-            throw IllegalArgumentException("Insufficient item quantity")
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Insufficient quantity. Available: ${inventoryItem.quantity}, Requested: ${request.quantity}"
+            )
         }
 
-        val remainingQuantity = inventoryItem.quantity - request.quantity
-        inventoryItem.apply {
-            this.quantity = remainingQuantity
-            this.lastUpdated = Date()
-        }
-
+        // Update quantity
+        inventoryItem.quantity -= request.quantity
+        inventoryItem.lastUpdated = Date()
         inventoryRepository.save(inventoryItem)
 
         val responseData = InventoryItemResponse(
-            itemId = inventoryItem.product.id ?: -1,  // Menggunakan ID produk dari entitas Product
-            name = inventoryItem.product.name,       // Menggunakan nama produk dari entitas Product
-            quantity = remainingQuantity,
-            lastUpdated = DateTimeFormatter.ISO_INSTANT.format(inventoryItem.lastUpdated.toInstant()),  // Format tanggal yang konsisten
-            imageUrl = inventoryItem.product.imageUrl // Add image URL here
+            itemId = inventoryItem.product.id ?: -1,
+            name = inventoryItem.product.name,
+            quantity = inventoryItem.quantity,
+            lastUpdated = DateTimeFormatter.ISO_INSTANT.format(inventoryItem.lastUpdated.toInstant()),
+            imageUrl = inventoryItem.product.imageUrl
         )
 
         return GetUserInventoryItemResponse(
@@ -62,6 +107,7 @@ class InventoryServiceImpl(
             data = listOf(responseData)
         )
     }
+
 
     override fun updateInventoryAfterPurchase(userId: Long, itemId: Long, quantity: Int): Boolean {
         val inventory = inventoryRepository.findByUserIdAndProductId(userId, itemId)
