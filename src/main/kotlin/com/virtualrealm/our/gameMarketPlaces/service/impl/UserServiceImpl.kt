@@ -1,6 +1,7 @@
 package com.virtualrealm.our.gameMarketPlaces.service.impl
 
 import com.virtualrealm.our.gameMarketPlaces.entity.User
+import com.virtualrealm.our.gameMarketPlaces.repository.OtpTokenRepository
 import com.virtualrealm.our.gameMarketPlaces.service.UserService
 import com.virtualrealm.our.gameMarketPlaces.service.impl.OtpService
 import com.virtualrealm.our.gameMarketPlaces.repository.UserRepository
@@ -10,7 +11,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UserServiceImpl(
     private val userRepository: UserRepository,
-    private val otpService: OtpService
+    private val otpService: OtpService,
+    private val tokenRepository: OtpTokenRepository
 ) : UserService {
 
     private val logger = org.slf4j.LoggerFactory.getLogger(UserServiceImpl::class.java)
@@ -50,4 +52,8 @@ class UserServiceImpl(
     override fun getUsersByRole(role: String): List<User> {
         return userRepository.findByRole(role)
     }
+
+
+
+
 }

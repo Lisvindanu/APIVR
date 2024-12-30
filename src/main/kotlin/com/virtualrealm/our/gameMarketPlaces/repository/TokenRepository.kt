@@ -9,4 +9,5 @@ interface TokenRepository: JpaRepository<UserToken,Long> {
     fun findBySub(sub : String): UserToken?
     fun deleteByToken(token: String)
     fun findByUser(user: User): UserToken?
+    fun deleteAllByUserId(userId: Long)
 }

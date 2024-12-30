@@ -505,5 +505,11 @@ class AuthServicesImpl  (
             isLoggedIn = false
         )
     }
+
+    @Transactional
+    fun logoutAllSessions(userId: Long) {
+        tokenRepository.deleteAllByUserId(userId)
+        logger.info("All sessions for user ID $userId have been logged out.")
+    }
 }
 
