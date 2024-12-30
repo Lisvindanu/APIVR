@@ -53,4 +53,12 @@ class PasswordUpdateController(
             )
         }
     }
+
+    @PostMapping("/auth/users/{userId}/change-password")
+    fun changePasswordAuth(
+        @PathVariable userId: Long,
+        @RequestBody @Valid request: ChangePasswordRequest
+    ): ResponseEntity<WebResponse<String>> {
+        return changePassword(userId, request)
+    }
 }
