@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*
 import org.slf4j.LoggerFactory
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api")
 @CrossOrigin
 class PasswordUpdateController(
     private val passwordUpdateService: PasswordUpdateServiceImpl
@@ -17,7 +17,7 @@ class PasswordUpdateController(
 
     private val logger = LoggerFactory.getLogger(PasswordUpdateController::class.java)
 
-    @PostMapping("/{userId}/change-password")
+    @PostMapping("/users/{userId}/change-password")
     fun changePassword(
         @PathVariable userId: Long,
         @RequestBody @Valid request: ChangePasswordRequest
@@ -33,16 +33,19 @@ class PasswordUpdateController(
         return processPasswordChange(userId, request)
     }
 
+    // Fungsi pemrosesan
     private fun processPasswordChange(userId: Long, request: ChangePasswordRequest): ResponseEntity<WebResponse<String>> {
         return try {
             logger.info("Request to change password for user ID: $userId")
             passwordUpdateService.changePassword(userId, request)
-            ResponseEntity.ok(WebResponse(
-                code = 200,
-                status = "success",
-                data = "Password successfully updated",
-                message = "Password has been changed successfully"
-            ))
+            ResponseEntity.ok(
+                WebResponse(
+                    code = 200,
+                    status = "success",
+                    data = "Password successfully updated",
+                    message = "Password has been changed successfully"
+                )
+            )
         } catch (e: IllegalArgumentException) {
             logger.error("Validation error: ${e.message}")
             ResponseEntity.badRequest().body(
