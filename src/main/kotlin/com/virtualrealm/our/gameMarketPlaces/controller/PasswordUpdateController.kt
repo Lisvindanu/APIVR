@@ -22,6 +22,18 @@ class PasswordUpdateController(
         @PathVariable userId: Long,
         @RequestBody @Valid request: ChangePasswordRequest
     ): ResponseEntity<WebResponse<String>> {
+        return processPasswordChange(userId, request)
+    }
+
+    @PostMapping("/auth/users/{userId}/change-password")
+    fun changePasswordAuth(
+        @PathVariable userId: Long,
+        @RequestBody @Valid request: ChangePasswordRequest
+    ): ResponseEntity<WebResponse<String>> {
+        return processPasswordChange(userId, request)
+    }
+
+    private fun processPasswordChange(userId: Long, request: ChangePasswordRequest): ResponseEntity<WebResponse<String>> {
         return try {
             logger.info("Request to change password for user ID: $userId")
             passwordUpdateService.changePassword(userId, request)
@@ -32,7 +44,7 @@ class PasswordUpdateController(
                 message = "Password has been changed successfully"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error("Error changing password: ${e.message}")
+            logger.error("Validation error: ${e.message}")
             ResponseEntity.badRequest().body(
                 WebResponse(
                     code = 400,
@@ -52,13 +64,5 @@ class PasswordUpdateController(
                 )
             )
         }
-    }
-
-    @PostMapping("/auth/users/{userId}/change-password")
-    fun changePasswordAuth(
-        @PathVariable userId: Long,
-        @RequestBody @Valid request: ChangePasswordRequest
-    ): ResponseEntity<WebResponse<String>> {
-        return changePassword(userId, request)
     }
 }

@@ -19,7 +19,10 @@ class PasswordUpdateServiceImpl(
     @Transactional
     fun changePassword(userId: Long, request: ChangePasswordRequest) {
         val user = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found") }
+            .orElseThrow {
+                logger.error("User with ID $userId not found")
+                IllegalArgumentException("User not found")
+            }
 
         logger.info("Validating current password for user ID: $userId")
 
@@ -45,11 +48,11 @@ class PasswordUpdateServiceImpl(
 
         // Simpan user dengan password baru
         userRepository.save(user)
+        logger.info("Password updated successfully for user ID: $userId")
 
         // Hapus semua token aktif
         logger.info("Deleting all active tokens for user ID: $userId")
         tokenRepository.deleteAllByUserId(userId)
-
-        logger.info("Password successfully updated for user ID: $userId")
+        logger.info("All active tokens deleted successfully for user ID: $userId")
     }
 }
