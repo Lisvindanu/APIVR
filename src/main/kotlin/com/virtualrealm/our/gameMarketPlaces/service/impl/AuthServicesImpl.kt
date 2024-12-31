@@ -506,6 +506,7 @@ class AuthServicesImpl  (
         val user = userRepository.findByEmail(email).orElse(null)
         return EmailCheckResponse(
             exists = user != null,
+            id = user?.id ?: -1,
             uuid = user?.id?.toString() ?: "",
             fullname = user?.username ?: "",
             username = user?.username ?: "",
