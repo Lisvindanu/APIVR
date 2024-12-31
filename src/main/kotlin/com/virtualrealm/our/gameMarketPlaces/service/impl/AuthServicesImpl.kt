@@ -262,7 +262,9 @@ class AuthServicesImpl  (
             email = user.email,
             googleId = user.googleId ?: "N/A",
             imageUrl = user.imageUrl,
-            uuid = user.uuid
+            uuid = user.uuid,
+            address = user.address,
+            phoneNumber = user.phoneNumber
         )
     }
 
@@ -299,6 +301,8 @@ class AuthServicesImpl  (
             val email = jsonResponse["email"].asText()
             val googleId = jsonResponse["sub"].asText()
             val imageUrl = jsonResponse["picture"].asText() // Google provides profile picture URL
+            val address = jsonResponse["address"].asText() // Google provides profile picture URL
+            val phoneNumber = jsonResponse["phoneNumber"].asText() // Google provides profile picture URL
 
             logger.debug("Google token received: $googleToken")
             logger.debug("User data from Google: Username = $username, Email = $email, Google ID = $googleId")
@@ -309,7 +313,9 @@ class AuthServicesImpl  (
                 email = email,
                 googleId = googleId,
                 imageUrl = imageUrl,
-                uuid = UUID.randomUUID().toString() // Generate a new UUID for Google users
+                uuid = UUID.randomUUID().toString(), // Generate a new UUID for Google users
+                address = address,
+                phoneNumber = phoneNumber
             )
         } else {
             throw IllegalArgumentException("Failed to fetch user data from Google: ${response.message}")

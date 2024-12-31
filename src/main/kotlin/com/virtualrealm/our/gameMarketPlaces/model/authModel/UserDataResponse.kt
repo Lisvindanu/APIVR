@@ -6,5 +6,7 @@ data class UserDataResponse(
     val email: String,
     val googleId: String?,
     val imageUrl: String?,
-    val uuid: String
+    val uuid: String,
+    val address: String?,
+    val phoneNumber: String?
 )
