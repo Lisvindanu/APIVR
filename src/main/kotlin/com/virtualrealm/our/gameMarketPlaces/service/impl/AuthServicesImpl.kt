@@ -489,6 +489,7 @@ class AuthServicesImpl  (
         return UserResponseData(
             id = user.id!!,
             username = user.username,
+            fullName = user.fullname!!,
             email = user.email,
             address = user.address!!,
             phoneNumber = user.phoneNumber!!
@@ -527,15 +528,12 @@ class AuthServicesImpl  (
             IllegalArgumentException("User not found")
         }
 
-        // Update fields if provided
-        updateRequest.username.let { existingUser.username = it }
+        // Update fullname (terpisah dari username)
+        updateRequest.fullname.let { existingUser.fullname = it }
+
+        // Update address dan phone number jika ada
         updateRequest.address?.let { existingUser.address = it }
         updateRequest.phoneNumber?.let { existingUser.phoneNumber = it }
-
-        // Update password if provided
-        updateRequest.password?.let {
-            existingUser.password = hashPassword(it)
-        }
 
         val updatedUser = userRepository.save(existingUser)
         logger.info("Profile updated for user ID: ${updatedUser.id}")
@@ -543,6 +541,7 @@ class AuthServicesImpl  (
         return UserResponseData(
             id = updatedUser.id!!,
             username = updatedUser.username,
+            fullName = updatedUser.fullname ?: "", // Sesuaikan dengan property name di UserResponseData
             email = updatedUser.email,
             address = updatedUser.address,
             phoneNumber = updatedUser.phoneNumber

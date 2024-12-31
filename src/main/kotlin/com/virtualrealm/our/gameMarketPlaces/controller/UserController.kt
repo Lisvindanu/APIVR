@@ -3,6 +3,7 @@ package com.virtualrealm.our.gameMarketPlaces.controller
 import com.virtualrealm.our.gameMarketPlaces.model.WebResponse
 import com.virtualrealm.our.gameMarketPlaces.model.authModel.UpdateUserRequest
 import com.virtualrealm.our.gameMarketPlaces.model.authModel.UserResponseData
+import com.virtualrealm.our.gameMarketPlaces.repository.UserRepository
 import com.virtualrealm.our.gameMarketPlaces.service.UserService
 import com.virtualrealm.our.gameMarketPlaces.service.impl.AuthServicesImpl
 import org.slf4j.LoggerFactory
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/users")
 class UserController(
     private val userService: UserService,
-    private val authServicesImpl: AuthServicesImpl
+    private val authServicesImpl: AuthServicesImpl,
+    private val userRepository: UserRepository
 ) {
     private val logger = LoggerFactory.getLogger(UserController::class.java)
 
@@ -57,6 +59,8 @@ class UserController(
     ): ResponseEntity<WebResponse<UserResponseData>> {
         return try {
             val token = authorization.removePrefix("Bearer ").trim()
+
+            // Langsung gunakan updateRequest yang dikirim, karena sudah ada field fullname terpisah
             val updatedUser = authServicesImpl.updateProfile(userId, updateRequest, token)
 
             val response = WebResponse(
@@ -77,4 +81,5 @@ class UserController(
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
+
 }
