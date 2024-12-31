@@ -489,7 +489,9 @@ class AuthServicesImpl  (
         return UserResponseData(
             id = user.id!!,
             username = user.username,
-            email = user.email
+            email = user.email,
+            address = user.address!!,
+            phoneNumber = user.phoneNumber!!
         )
     }
 
@@ -510,6 +512,41 @@ class AuthServicesImpl  (
     fun logoutAllSessions(userId: Long) {
         tokenRepository.deleteAllByUserId(userId)
         logger.info("All sessions for user ID $userId have been logged out.")
+    }
+
+    @Transactional
+    fun updateProfile(userId: Long, updateRequest: UpdateUserRequest, token: String): UserResponseData {
+        // Validate token first
+        if (!validateToken(token)) {
+            throw IllegalArgumentException("Invalid token")
+        }
+
+        logger.info("Updating profile for user ID: $userId")
+
+        val existingUser = userRepository.findById(userId).orElseThrow {
+            IllegalArgumentException("User not found")
+        }
+
+        // Update fields if provided
+        updateRequest.username.let { existingUser.username = it }
+        updateRequest.address?.let { existingUser.address = it }
+        updateRequest.phoneNumber?.let { existingUser.phoneNumber = it }
+
+        // Update password if provided
+        updateRequest.password?.let {
+            existingUser.password = hashPassword(it)
+        }
+
+        val updatedUser = userRepository.save(existingUser)
+        logger.info("Profile updated for user ID: ${updatedUser.id}")
+
+        return UserResponseData(
+            id = updatedUser.id!!,
+            username = updatedUser.username,
+            email = updatedUser.email,
+            address = updatedUser.address,
+            phoneNumber = updatedUser.phoneNumber
+        )
     }
 }
 

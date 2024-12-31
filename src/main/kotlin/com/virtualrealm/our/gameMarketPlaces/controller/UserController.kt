@@ -48,4 +48,33 @@ class UserController(
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
+
+    @PutMapping("/profile/{userId}")
+    fun updateProfile(
+        @PathVariable userId: Long,
+        @RequestBody updateRequest: UpdateUserRequest,
+        @RequestHeader("Authorization") authorization: String
+    ): ResponseEntity<WebResponse<UserResponseData>> {
+        return try {
+            val token = authorization.removePrefix("Bearer ").trim()
+            val updatedUser = authServicesImpl.updateProfile(userId, updateRequest, token)
+
+            val response = WebResponse(
+                code = 200,
+                status = "success",
+                data = updatedUser,
+                message = "Profile updated successfully"
+            )
+            ResponseEntity.ok(response)
+        } catch (e: Exception) {
+            logger.error("Error updating profile: ${e.message}")
+            val response = WebResponse<UserResponseData>(
+                code = 500,
+                status = "error",
+                data = null,
+                message = "An unexpected error occurred: ${e.message}"
+            )
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
+        }
+    }
 }

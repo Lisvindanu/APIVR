@@ -14,7 +14,7 @@ data class User (
     @Column(name = "username", unique = true)
     var username: String,
 
-    @Column(name = "fullname")  // Menambahkan field fullname
+    @Column(name = "fullname")
     var fullname: String? = null,
 
     @Column(name = "email")
@@ -27,7 +27,7 @@ data class User (
     @Column(name = "googleId")
     val googleId: String? = null,
 
-    @Column(name = "image_url")  // Menambahkan field untuk avatar/image
+    @Column(name = "image_url")
     var imageUrl: String? = null,
 
     @Column(name = "created_at")
@@ -39,7 +39,13 @@ data class User (
     @Column(name = "role")
     var role: String ?= "USER",
 
-    @Column(name = "uuid")  // Menambahkan UUID untuk identifier unik
-    var uuid: String = java.util.UUID.randomUUID().toString()
+    @Column(name = "uuid")
+    var uuid: String = java.util.UUID.randomUUID().toString(),
+
+    @Column(name = "alamat")
+var address: String? = null,
+
+@Column(name = "nomerHp")
+var phoneNumber: String? = null
 )
 
