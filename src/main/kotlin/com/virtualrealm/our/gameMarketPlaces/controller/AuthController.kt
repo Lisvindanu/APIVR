@@ -349,48 +349,65 @@ class AuthController(
 
     @PostMapping("/google")
     fun loginOrRegisterWithGoogle(@RequestBody request: GoogleLoginRequest): ResponseEntity<WebResponse<LoginResponseData>> {
-        // Periksa apakah pengguna sudah terdaftar berdasarkan Google ID
-        val existingUser = userRepository.findByGoogleId(request.googleId)
+        try {
+            // Periksa apakah pengguna sudah terdaftar berdasarkan Google ID
+            val existingUser = userRepository.findByGoogleId(request.googleId)
 
-        val user = if (existingUser != null) {
             // Jika pengguna sudah ada, perbarui token Google jika diperlukan
-            existingUser.googleToken = request.googleToken
-            existingUser.googleRefreshToken = request.googleRefreshToken ?: "" // Nilai default jika null
-            userRepository.save(existingUser)
-        } else {
-            // Jika pengguna belum ada, lakukan registrasi pengguna baru
-            userRepository.save(
-                User(
-                    username = request.name,
-                    fullname = request.name, // Bisa diambil dari Google
-                    email = request.email,
-                    googleId = request.googleId,
-                    imageUrl = request.picture,
-                    googleToken = request.googleToken,
-                    googleRefreshToken = request.googleRefreshToken ?: "", // Nilai default jika null
-                    password = "", // Kosongkan password untuk Google login
-                    role = "USER" // Default role
+            val user = if (existingUser != null) {
+                existingUser.apply {
+                    googleToken = request.googleToken
+                    googleRefreshToken = request.googleRefreshToken ?: "" // Nilai default jika null
+                }.also { userRepository.save(it) }
+            } else {
+                // Jika pengguna belum ada, lakukan registrasi pengguna baru
+                userRepository.save(
+                    User(
+                        username = request.name,
+                        fullname = request.name, // Bisa diambil dari Google
+                        email = request.email,
+                        googleId = request.googleId,
+                        imageUrl = request.picture,
+                        googleToken = request.googleToken,
+                        googleRefreshToken = request.googleRefreshToken ?: "", // Nilai default jika null
+                        password = "", // Kosongkan password untuk Google login
+                        role = "USER" // Default role
+                    )
+                )
+            }
+
+            // Generate token untuk pengguna
+            val token = authServices.generateAndStoreToken(user)
+
+            // Log token untuk debugging
+            logger.info("Token berhasil dibuat untuk pengguna: ${user.username}")
+
+            // Kembalikan respons ke Laravel
+            return ResponseEntity.ok(
+                WebResponse(
+                    code = 200,
+                    status = "success",
+                    data = LoginResponseData(
+                        token = token.token,
+                        expiresAt = token.expiresAt,
+                        status = "SUCCESS",
+                        role = user.role
+                    ),
+                    message = "Login/Registration successful"
+                )
+            )
+        } catch (e: Exception) {
+            // Tangani error dan kembalikan respons
+            logger.error("Error saat login/registrasi dengan Google: ${e.message}", e)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                WebResponse(
+                    code = 500,
+                    status = "error",
+                    data = null,
+                    message = "An unexpected error occurred: ${e.message}"
                 )
             )
         }
-
-        // Generate token untuk pengguna
-        val token = authServices.generateAndStoreToken(user)
-
-        // Kembalikan respons ke Laravel
-        return ResponseEntity.ok(
-            WebResponse(
-                code = 200,
-                status = "success",
-                data = LoginResponseData(
-                    token = token.token,
-                    expiresAt = token.expiresAt,
-                    status = "SUCCESS",
-                    role = user.role
-                ),
-                message = "Login/Registration successful"
-            )
-        )
     }
 
 
