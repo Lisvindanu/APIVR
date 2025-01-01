@@ -46,6 +46,14 @@ data class User (
 var address: String? = null,
 
 @Column(name = "nomerHp")
-var phoneNumber: String? = null
-)
+var phoneNumber: String? = null,
+    @Column(name = "google_token")
+    var googleToken: String? = null,
+
+    @Column(name = "google_refresh_token")
+    var googleRefreshToken: String? = null,
+
+
+    )
+
 
