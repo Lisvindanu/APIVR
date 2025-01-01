@@ -301,5 +301,42 @@ class AuthController(
         )
     }
 
+    @PostMapping("/google")
+    fun loginWithGoogle(@RequestBody request: GoogleLoginRequest): ResponseEntity<WebResponse<LoginResponseData>> {
+        val existingUser = userRepository.findByGoogleId(request.googleId)
+
+        val user = if (existingUser != null) {
+            // User exists, update token if needed
+            existingUser
+        } else {
+            // Register new user
+            userRepository.save(
+                User(
+                    username = request.name,
+                    email = request.email,
+                    googleId = request.googleId,
+                    imageUrl = request.picture,
+                    password = "", // Password kosong karena Google login
+                )
+            )
+        }
+
+        // Generate token untuk aplikasi
+        val token = authServices.generateAndStoreToken(user)
+
+        return ResponseEntity.ok(
+            WebResponse(
+                code = 200,
+                status = "success",
+                data = LoginResponseData(
+                    token = token.token,
+                    expiresAt = token.expiresAt,
+                    status = "SUCCESS",
+                    role = user.role
+                ),
+                message = "Login successful"
+            )
+        )
+    }
 
 }
