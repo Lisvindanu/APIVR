@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 data class User (
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long ?= null,
+    val id: Long? = null,
 
     @Column(name = "username", unique = true)
     var username: String,
@@ -37,23 +37,20 @@ data class User (
     var isOtpVerified: Boolean? = false,
 
     @Column(name = "role")
-    var role: String ?= "USER",
+    var role: String? = "USER",
 
     @Column(name = "uuid")
     var uuid: String = java.util.UUID.randomUUID().toString(),
 
     @Column(name = "alamat")
-var address: String? = null,
+    var address: String? = null,
 
-@Column(name = "nomerHp")
-var phoneNumber: String? = null,
+    @Column(name = "nomerHp")
+    var phoneNumber: String? = null,
+
     @Column(name = "google_token")
     var googleToken: String? = null,
 
     @Column(name = "google_refresh_token")
-    var googleRefreshToken: String? = null,
-
-
-    )
-
-
+    var googleRefreshToken: String? = null
+)
