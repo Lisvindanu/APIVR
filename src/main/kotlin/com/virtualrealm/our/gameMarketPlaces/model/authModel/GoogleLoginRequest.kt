@@ -6,5 +6,5 @@ data class GoogleLoginRequest(
     val name: String,
     val picture: String,
     val googleToken: String,
-    val googleRefreshToken: String
+    val googleRefreshToken: String?
 )
