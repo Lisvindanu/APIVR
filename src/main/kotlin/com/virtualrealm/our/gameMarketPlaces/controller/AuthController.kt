@@ -302,28 +302,36 @@ class AuthController(
     }
 
     @PostMapping("/google")
-    fun loginWithGoogle(@RequestBody request: GoogleLoginRequest): ResponseEntity<WebResponse<LoginResponseData>> {
+    fun loginOrRegisterWithGoogle(@RequestBody request: GoogleLoginRequest): ResponseEntity<WebResponse<LoginResponseData>> {
+        // Periksa apakah pengguna sudah terdaftar berdasarkan Google ID
         val existingUser = userRepository.findByGoogleId(request.googleId)
 
         val user = if (existingUser != null) {
-            // User exists, update token if needed
-            existingUser
+            // Jika pengguna sudah ada, perbarui token Google jika diperlukan
+            existingUser.googleToken = request.googleToken
+            existingUser.googleRefreshToken = request.googleRefreshToken
+            userRepository.save(existingUser)
         } else {
-            // Register new user
+            // Jika pengguna belum ada, lakukan registrasi pengguna baru
             userRepository.save(
                 User(
                     username = request.name,
+                    fullname = request.name, // Bisa diambil dari Google
                     email = request.email,
                     googleId = request.googleId,
                     imageUrl = request.picture,
-                    password = "", // Password kosong karena Google login
+                    googleToken = request.googleToken,
+                    googleRefreshToken = request.googleRefreshToken,
+                    password = "", // Kosongkan password untuk Google login
+                    role = "USER" // Default role
                 )
             )
         }
 
-        // Generate token untuk aplikasi
+        // Generate token untuk pengguna
         val token = authServices.generateAndStoreToken(user)
 
+        // Kembalikan respons ke Laravel
         return ResponseEntity.ok(
             WebResponse(
                 code = 200,
@@ -334,7 +342,7 @@ class AuthController(
                     status = "SUCCESS",
                     role = user.role
                 ),
-                message = "Login successful"
+                message = "Login/Registration successful"
             )
         )
     }
