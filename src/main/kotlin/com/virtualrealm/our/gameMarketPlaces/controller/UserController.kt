@@ -81,27 +81,8 @@ class UserController(
             val token = authorization.removePrefix("Bearer ").trim()
             val updateRequest = objectMapper.readValue(body, UpdateUserRequest::class.java)
 
-            // Validate file if present
-            file?.let {
-                val allowedTypes = listOf("image/png", "image/jpeg", "image/jpg", "image/svg+xml")
-                if (!allowedTypes.contains(it.contentType)) {
-                    throw IllegalArgumentException("Only image files (png, jpg, jpeg, svg) are allowed")
-                }
-            }
-
-            // Handle file upload if exists
-            val imageUrl = if (file != null) {
-                val fileName = "${UUID.randomUUID()}_${file.originalFilename}"
-                val relativePath = "uploads/images/$fileName"
-                val filePath = Paths.get(uploadDir, fileName).toString()
-                val imageFile = File(filePath)
-
-                imageFile.parentFile.mkdirs()
-                file.transferTo(imageFile)
-                "https://virtual-realm.my.id/$relativePath"
-            } else {
-                updateRequest.imageUrl
-            }
+            // Handle file upload if present
+            val imageUrl = handleFileUpload(file, updateRequest)
 
             // Update user profile
             val updatedUser = authServices.updateProfile(
@@ -125,6 +106,39 @@ class UserController(
                 message = "An unexpected error occurred: ${e.message}"
             ))
         }
+    }
+
+    private fun handleFileUpload(file: MultipartFile?, updateRequest: UpdateUserRequest): String {
+        if (file != null) {
+            try {
+                val allowedTypes = listOf("image/png", "image/jpeg", "image/jpg", "image/svg+xml")
+                val contentType = file.contentType ?: throw IllegalArgumentException("File type is required")
+
+                if (!allowedTypes.contains(contentType)) {
+                    throw IllegalArgumentException("Unsupported file type: $contentType")
+                }
+
+                val fileName = "${UUID.randomUUID()}_${file.originalFilename}"
+                val relativePath = "uploads/images/$fileName"
+                val filePath = Paths.get(uploadDir, fileName).toString()
+                val imageFile = File(filePath)
+
+                // Create directories if not exist
+                imageFile.parentFile.mkdirs()
+
+                // Save file
+                file.transferTo(imageFile)
+                logger.info("File saved successfully: $filePath")
+
+                return "https://virtual-realm.my.id/$relativePath"
+            } catch (e: Exception) {
+                logger.error("Error saving file: ${e.message}")
+                throw RuntimeException("File upload failed: ${e.message}")
+            }
+        }
+
+        // Return existing imageUrl if file is not provided
+        return updateRequest.imageUrl ?: "/uploads/images/default-profile.jpg"
     }
 
 
