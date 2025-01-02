@@ -82,14 +82,54 @@ class UserController(
             val updateRequest = objectMapper.readValue(body, UpdateUserRequest::class.java)
 
             // Handle file upload if present
-            val imageUrl = handleFileUpload(file, updateRequest)
+            val imageUrl = if (file != null) {
+                try {
+                    val allowedTypes = listOf("image/png", "image/jpeg", "image/jpg", "image/svg+xml")
+                    val contentType = file.contentType ?: throw IllegalArgumentException("File type is required")
 
-            // Update user profile
-            val updatedUser = authServices.updateProfile(
-                userId,
-                updateRequest.copy(imageUrl = imageUrl),
-                token
+                    if (!allowedTypes.contains(contentType)) {
+                        throw IllegalArgumentException("Unsupported file type: $contentType")
+                    }
+
+                    val fileName = "${UUID.randomUUID()}_${file.originalFilename}"
+                    val remoteFilePath = "/uploads/images/$fileName"
+
+                    // Upload to SFTP server
+                    val uploadSuccess = sftpService.uploadFileToSftp(
+                        sftpServer,
+                        sftpPort,
+                        sftpUsername,
+                        sftpPassword,
+                        file,
+                        remoteFilePath
+                    )
+
+                    if (!uploadSuccess) {
+                        throw RuntimeException("Failed to upload profile picture")
+                    }
+
+                    // Return the full URL path
+                    "https://virtual-realm.my.id$remoteFilePath"
+                } catch (e: Exception) {
+                    logger.error("Error uploading file: ${e.message}")
+                    throw RuntimeException("File upload failed: ${e.message}")
+                }
+            } else {
+                // Keep existing image URL if no new file is uploaded
+                updateRequest.imageUrl
+            }
+
+            // Create a new UpdateUserRequest with all the existing data plus the new image URL
+            val finalUpdateRequest = updateRequest.copy(
+                username = updateRequest.username,
+                fullname = updateRequest.fullname,
+                address = updateRequest.address,
+                phoneNumber = updateRequest.phoneNumber,
+                imageUrl = imageUrl ?: updateRequest.imageUrl
             )
+
+            // Update the complete user profile
+            val updatedUser = authServices.updateProfile(userId, finalUpdateRequest, token, file)
 
             ResponseEntity.ok(WebResponse(
                 code = 200,
@@ -108,6 +148,7 @@ class UserController(
         }
     }
 
+    // Keep existing handleFileUpload method for other uses
     private fun handleFileUpload(file: MultipartFile?, updateRequest: UpdateUserRequest): String {
         if (file != null) {
             try {
@@ -138,7 +179,7 @@ class UserController(
         }
 
         // Return existing imageUrl if file is not provided
-        return updateRequest.imageUrl ?: "/uploads/images/default-profile.jpg"
+        return updateRequest.imageUrl ?: "/uploads/images/default-image.jpg"
     }
 
 
