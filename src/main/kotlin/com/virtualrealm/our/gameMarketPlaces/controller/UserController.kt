@@ -107,20 +107,18 @@ class UserController(
             val updateRequest = objectMapper.readValue(body, UpdateUserRequest::class.java)
 
             // Handle file upload if exists
-            val imageUrl = file?.let {
-                val fileName = "${UUID.randomUUID()}_${it.originalFilename}"
+            val imageUrl = if (file != null) {
+                val fileName = "${UUID.randomUUID()}_${file.originalFilename}"
                 val remoteFilePath = "/uploads/profiles/$fileName"
 
-                // Log untuk debug
                 logger.info("Starting file upload process for user $userId")
 
-                // Upload to SFTP server - gunakan server yang sama dengan product
                 val uploadSuccess = sftpService.uploadFileToSftp(
                     sftpServer,
                     sftpPort,
                     sftpUsername,
                     sftpPassword,
-                    it,
+                    file,
                     remoteFilePath
                 )
 
@@ -130,16 +128,17 @@ class UserController(
                 }
 
                 logger.info("File upload successful for user $userId")
-
-                // Return URL yang bisa diakses publik
                 "https://virtual-realm.my.id/uploads/profiles/$fileName"
+            } else {
+                updateRequest.imageUrl
             }
 
             // Update user profile dengan URL gambar baru jika ada
             val updatedUser = authServices.updateProfile(
                 userId,
-                updateRequest.copy(imageUrl = imageUrl ?: updateRequest.imageUrl),
-                token
+                updateRequest.copy(imageUrl = imageUrl),
+                token,
+                file  // Pass file to service
             )
 
             ResponseEntity.ok(WebResponse(

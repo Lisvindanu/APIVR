@@ -4,6 +4,7 @@ import com.virtualrealm.our.gameMarketPlaces.entity.User
 import com.virtualrealm.our.gameMarketPlaces.entity.UserToken
 import com.virtualrealm.our.gameMarketPlaces.model.authModel.*
 import org.springframework.security.oauth2.core.user.OAuth2User
+import org.springframework.web.multipart.MultipartFile
 
 interface AuthServices {
     fun register(registerRequest: RegisterRequest): RegisterResponseData
@@ -21,6 +22,7 @@ interface AuthServices {
     fun updateProfile(
         userId: Long,
         updateRequest: UpdateUserRequest,
-        token: String
+        token: String,
+        file: MultipartFile? = null
     ): UserResponseData
 }

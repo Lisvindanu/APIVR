@@ -15,11 +15,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.mindrot.jbcrypt.BCrypt
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDateTime
 import java.util.*
 
@@ -31,9 +33,14 @@ class AuthServicesImpl  (
     private val tokenRepository: TokenRepository,
     private val otpService: OtpService,
     private val emailService: EmailService,
-    private val otpTokenRepository: OtpTokenRepository
+    private val otpTokenRepository: OtpTokenRepository,
+    val sftpService: SftpService,  // Add SFTP Service
+    @Value("\${sftp.server}") val sftpServer: String,  // Add sftp configuration
+    @Value("\${sftp.port}") val sftpPort: Int,
+    @Value("\${sftp.username}") val sftpUsername: String,
+    @Value("\${sftp.password}") val sftpPassword: String,
 
-) : AuthServices {
+    ) : AuthServices {
 
     private val logger = LoggerFactory.getLogger(AuthServicesImpl::class.java)
     private val client = OkHttpClient()
@@ -523,8 +530,15 @@ class AuthServicesImpl  (
         logger.info("All sessions for user ID $userId have been logged out.")
     }
 
+
+
     @Transactional
-    override  fun updateProfile(userId: Long, updateRequest: UpdateUserRequest, token: String): UserResponseData {
+    override fun updateProfile(
+        userId: Long,
+        updateRequest: UpdateUserRequest,
+        token: String,
+        file: MultipartFile?
+    ): UserResponseData {
         // Validate token first
         if (!validateToken(token)) {
             throw IllegalArgumentException("Invalid token")
@@ -543,8 +557,29 @@ class AuthServicesImpl  (
         updateRequest.address?.let { existingUser.address = it }
         updateRequest.phoneNumber?.let { existingUser.phoneNumber = it }
 
-        // Update imageUrl jika ada foto baru
-        updateRequest.imageUrl?.let { existingUser.imageUrl = it }
+        // Handle file upload using sftp if a new file is provided
+        val imageUrl = file?.let {
+            val fileName = "${UUID.randomUUID()}_${it.originalFilename}"
+            val remoteFilePath = "/uploads/profiles/$fileName"
+
+            // Upload to sftp server
+            val uploadSuccess = sftpService.uploadFileToSftp(
+                sftpServer,
+                sftpPort,
+                sftpUsername,
+                sftpPassword,
+                it,
+                remoteFilePath
+            )
+
+            if (!uploadSuccess) {
+                throw RuntimeException("Failed to upload profile picture")
+            }
+
+            "/uploads/profiles/$fileName"  // Return the URL path
+        } ?: existingUser.imageUrl // Keep existing image URL if no new file is uploaded
+
+        existingUser.imageUrl = imageUrl
 
         val updatedUser = userRepository.save(existingUser)
         logger.info("Profile updated for user ID: ${updatedUser.id}")
@@ -556,10 +591,8 @@ class AuthServicesImpl  (
             email = updatedUser.email,
             address = updatedUser.address,
             phoneNumber = updatedUser.phoneNumber,
-            imageUrl = updatedUser.imageUrl // Tambahkan imageUrl ke response
+            imageUrl = updatedUser.imageUrl
         )
     }
-
-
 }
 
