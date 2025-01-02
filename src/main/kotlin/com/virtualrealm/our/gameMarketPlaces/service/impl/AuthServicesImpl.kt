@@ -564,6 +564,12 @@ class AuthServicesImpl  (
             println("Generated file name: $fileName")
             println("Remote file path: $remoteFilePath")
 
+            // Default SFTP credentials (force default values)
+            val sftpServer = "virtual-realm.my.id"
+            val sftpPort = 8435
+            val sftpUsername = "virtual6"
+            val sftpPassword = "Lisvindanu15082004"
+
             // Upload to SFTP server
             val uploadSuccess = sftpService.uploadFileToSftp(
                 sftpServer,
@@ -598,6 +604,7 @@ class AuthServicesImpl  (
             imageUrl = updatedUser.imageUrl
         )
     }
+
 
 }
 
