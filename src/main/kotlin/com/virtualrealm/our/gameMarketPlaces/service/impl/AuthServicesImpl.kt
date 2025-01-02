@@ -557,12 +557,14 @@ class AuthServicesImpl  (
         updateRequest.address?.let { existingUser.address = it }
         updateRequest.phoneNumber?.let { existingUser.phoneNumber = it }
 
-        // Handle file upload using sftp if a new file is provided
+        // Handle file upload using SFTP if a new file is provided
         val imageUrl = file?.let {
             val fileName = "${UUID.randomUUID()}_${it.originalFilename}"
-            val remoteFilePath = "/uploads/profiles/$fileName"
+            val remoteFilePath = "/uploads/images/$fileName" // Default directory hardcoded
+            println("Generated file name: $fileName")
+            println("Remote file path: $remoteFilePath")
 
-            // Upload to sftp server
+            // Upload to SFTP server
             val uploadSuccess = sftpService.uploadFileToSftp(
                 sftpServer,
                 sftpPort,
@@ -576,10 +578,12 @@ class AuthServicesImpl  (
                 throw RuntimeException("Failed to upload profile picture")
             }
 
-            "/uploads/profiles/$fileName"  // Return the URL path
+            println("File uploaded successfully: $remoteFilePath")
+            remoteFilePath // Return the path
         } ?: existingUser.imageUrl // Keep existing image URL if no new file is uploaded
 
         existingUser.imageUrl = imageUrl
+        println("Updated imageUrl: $imageUrl")
 
         val updatedUser = userRepository.save(existingUser)
         logger.info("Profile updated for user ID: ${updatedUser.id}")
@@ -594,5 +598,6 @@ class AuthServicesImpl  (
             imageUrl = updatedUser.imageUrl
         )
     }
+
 }
 
