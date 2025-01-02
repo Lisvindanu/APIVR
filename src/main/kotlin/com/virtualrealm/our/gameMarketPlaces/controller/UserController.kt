@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.io.File
+import java.nio.file.Paths
 import java.util.*
 
 @RestController
@@ -30,7 +32,9 @@ class UserController(
     @Value("\${sftp.server}") private val sftpServer: String,
     @Value("\${sftp.port}") private val sftpPort: Int,
     @Value("\${sftp.username}") private val sftpUsername: String,
-    @Value("\${sftp.password}") private val sftpPassword: String
+    @Value("\${sftp.password}") private val sftpPassword: String,
+    @Value("\${file.upload.dir}") val uploadDir: String,
+
 ) {
     private val logger = LoggerFactory.getLogger(UserController::class.java)
 
@@ -64,6 +68,68 @@ class UserController(
         }
     }
 
+
+
+    @PutMapping("/profile/{userId}")
+    fun updateProfile(
+        @PathVariable userId: Long,
+        @RequestPart("body") body: String,
+        @RequestPart(value = "file", required = false) file: MultipartFile?,
+        @RequestHeader("Authorization") authorization: String
+    ): ResponseEntity<WebResponse<UserResponseData>> {
+        return try {
+            val token = authorization.removePrefix("Bearer ").trim()
+            val updateRequest = objectMapper.readValue(body, UpdateUserRequest::class.java)
+
+            // Validate file if present
+            file?.let {
+                val allowedTypes = listOf("image/png", "image/jpeg", "image/jpg", "image/svg+xml")
+                if (!allowedTypes.contains(it.contentType)) {
+                    throw IllegalArgumentException("Only image files (png, jpg, jpeg, svg) are allowed")
+                }
+            }
+
+            // Handle file upload if exists
+            val imageUrl = if (file != null) {
+                val fileName = "${UUID.randomUUID()}_${file.originalFilename}"
+                val relativePath = "uploads/images/$fileName"
+                val filePath = Paths.get(uploadDir, fileName).toString()
+                val imageFile = File(filePath)
+
+                imageFile.parentFile.mkdirs()
+                file.transferTo(imageFile)
+                "https://virtual-realm.my.id/$relativePath"
+            } else {
+                updateRequest.imageUrl
+            }
+
+            // Update user profile
+            val updatedUser = authServices.updateProfile(
+                userId,
+                updateRequest.copy(imageUrl = imageUrl),
+                token
+            )
+
+            ResponseEntity.ok(WebResponse(
+                code = 200,
+                status = "success",
+                data = updatedUser,
+                message = "Profile updated successfully"
+            ))
+        } catch (e: Exception) {
+            logger.error("Error updating profile: ${e.message}")
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(WebResponse(
+                code = 500,
+                status = "error",
+                data = null,
+                message = "An unexpected error occurred: ${e.message}"
+            ))
+        }
+    }
+
+
+}
+
 //    @PutMapping("/profile/{userId}")
 //    fun updateProfile(
 //        @PathVariable userId: Long,
@@ -94,69 +160,3 @@ class UserController(
 //            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
 //        }
 //    }
-
-    @PutMapping("/profile/{userId}")
-    fun updateProfile(
-        @PathVariable userId: Long,
-        @RequestPart("body") body: String,
-        @RequestPart(value = "file", required = false) file: MultipartFile?,
-        @RequestHeader("Authorization") authorization: String
-    ): ResponseEntity<WebResponse<UserResponseData>> {
-        return try {
-            val token = authorization.removePrefix("Bearer ").trim()
-            val updateRequest = objectMapper.readValue(body, UpdateUserRequest::class.java)
-
-            // Handle file upload if exists
-            val imageUrl = if (file != null) {
-                val fileName = "${UUID.randomUUID()}_${file.originalFilename}"
-                val remoteFilePath = "/uploads/profiles/$fileName"
-
-                logger.info("Starting file upload process for user $userId")
-
-                val uploadSuccess = sftpService.uploadFileToSftp(
-                    sftpServer,
-                    sftpPort,
-                    sftpUsername,
-                    sftpPassword,
-                    file,
-                    remoteFilePath
-                )
-
-                if (!uploadSuccess) {
-                    logger.error("Failed to upload profile picture for user $userId")
-                    throw RuntimeException("Failed to upload profile picture")
-                }
-
-                logger.info("File upload successful for user $userId")
-                "https://virtual-realm.my.id/uploads/profiles/$fileName"
-            } else {
-                updateRequest.imageUrl
-            }
-
-            // Update user profile dengan URL gambar baru jika ada
-            val updatedUser = authServices.updateProfile(
-                userId,
-                updateRequest.copy(imageUrl = imageUrl),
-                token,
-                file  // Pass file to service
-            )
-
-            ResponseEntity.ok(WebResponse(
-                code = 200,
-                status = "success",
-                data = updatedUser,
-                message = "Profile updated successfully"
-            ))
-
-        } catch (e: Exception) {
-            logger.error("Error updating profile: ${e.message}")
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(WebResponse(
-                code = 500,
-                status = "error",
-                data = null,
-                message = "An unexpected error occurred: ${e.message}"
-            ))
-        }
-    }
-
-}
