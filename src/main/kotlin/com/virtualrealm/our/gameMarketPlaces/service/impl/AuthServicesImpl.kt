@@ -498,7 +498,8 @@ class AuthServicesImpl  (
             fullName = user.fullname!!,
             email = user.email,
             address = user.address!!,
-            phoneNumber = user.phoneNumber!!
+            phoneNumber = user.phoneNumber!!,
+            imageUrl = user.imageUrl!!
         )
     }
 
@@ -523,7 +524,7 @@ class AuthServicesImpl  (
     }
 
     @Transactional
-    fun updateProfile(userId: Long, updateRequest: UpdateUserRequest, token: String): UserResponseData {
+    override  fun updateProfile(userId: Long, updateRequest: UpdateUserRequest, token: String): UserResponseData {
         // Validate token first
         if (!validateToken(token)) {
             throw IllegalArgumentException("Invalid token")
@@ -542,16 +543,20 @@ class AuthServicesImpl  (
         updateRequest.address?.let { existingUser.address = it }
         updateRequest.phoneNumber?.let { existingUser.phoneNumber = it }
 
+        // Update imageUrl jika ada foto baru
+        updateRequest.imageUrl?.let { existingUser.imageUrl = it }
+
         val updatedUser = userRepository.save(existingUser)
         logger.info("Profile updated for user ID: ${updatedUser.id}")
 
         return UserResponseData(
             id = updatedUser.id!!,
             username = updatedUser.username,
-            fullName = updatedUser.fullname ?: "", // Sesuaikan dengan property name di UserResponseData
+            fullName = updatedUser.fullname ?: "",
             email = updatedUser.email,
             address = updatedUser.address,
-            phoneNumber = updatedUser.phoneNumber
+            phoneNumber = updatedUser.phoneNumber,
+            imageUrl = updatedUser.imageUrl // Tambahkan imageUrl ke response
         )
     }
 

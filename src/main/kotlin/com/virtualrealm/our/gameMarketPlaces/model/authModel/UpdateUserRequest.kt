@@ -5,5 +5,6 @@ data class UpdateUserRequest(
     val fullname : String,
     val password: String?,  // Optional
     val address: String?,   // Optional
-    val phoneNumber: String? // Optional
+    val phoneNumber: String?, // Optional
+    val imageUrl : String?
 )

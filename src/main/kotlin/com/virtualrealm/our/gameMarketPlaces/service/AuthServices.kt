@@ -18,4 +18,9 @@ interface AuthServices {
     fun handleGoogleAuthentication(oauth2User: OAuth2User): User
     fun getOAuth2UserFromGoogleToken(googleToken: String): OAuth2User
     fun checkEmailExists(email: String): EmailCheckResponse
+    fun updateProfile(
+        userId: Long,
+        updateRequest: UpdateUserRequest,
+        token: String
+    ): UserResponseData
 }
