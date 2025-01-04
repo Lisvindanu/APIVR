@@ -155,7 +155,7 @@ class ProductController(
 
     @GetMapping(produces = ["application/json"])
     fun listProducts(
-        @RequestParam(value = "size", defaultValue = "10") size: Int,
+        @RequestParam(value = "size", defaultValue = "100") size: Int,
         @RequestParam(value = "page", defaultValue = "0") page: Int,
         @RequestHeader("X-Api-Key") apiKey: String
     ): WebResponse<List<ProductResponse>> {
