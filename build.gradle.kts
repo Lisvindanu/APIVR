@@ -49,7 +49,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-	implementation("org.apache.commons:commons-net:3.8.0")
+//	implementation("org.apache.commons:commons-net:3.8.0")
 // https://mvnrepository.com/artifact/com.jcraft/jsch
 	implementation("com.jcraft:jsch:0.1.55")
 	"developmentOnly"("org.springframework.boot:spring-boot-devtools")
