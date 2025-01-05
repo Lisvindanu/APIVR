@@ -566,7 +566,7 @@ class AuthServicesImpl  (
 
             // Default SFTP credentials (force default values)
             val sftpServer = "virtual-realm.my.id"
-            val sftpPort = 8435
+            val sftpPort = 21
             val sftpUsername = "virtual6"
             val sftpPassword = "Lisvindanu15082004"
 
