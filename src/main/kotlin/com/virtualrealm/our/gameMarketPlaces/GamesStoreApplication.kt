@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
 		"STACKHERO_MARIADB_DATABASE_URL", "STACKHERO_MARIADB_ROOT_USERNAME", "STACKHERO_MARIADB_ROOT_PASSWORD",
 		"SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD",
 		"GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI", "SFTP_SERVER", "SFTP_PORT", "SFTP_USERNAME", "SFTP_PASSWORD",
+		"YOUTUBE_API_KEY",
 	)
 	val missingKeys = requiredKeys.filter { dotenv[it].isNullOrBlank() }
 
@@ -38,6 +39,9 @@ fun main(args: Array<String>) {
 	System.setProperty("spring.mail.password", dotenv["SMTP_PASSWORD"] ?: "")
 	System.setProperty("spring.mail.properties.mail.smtp.auth", "true")
 	System.setProperty("spring.mail.properties.mail.smtp.starttls.enable", "true")
+
+	System.setProperty("youtube.api.key", dotenv["YOUTUBE_API_KEY"] ?: "")
+
 
 	runApplication<GamesStoreApplication>(*args)
 }

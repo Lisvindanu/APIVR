@@ -46,5 +46,9 @@ data class Product(
     var genres: MutableSet<Genre> = mutableSetOf(),
 
     @Column(name = "image_url")
-    var imageUrl: String? = null
+    var imageUrl: String? = null,
+
+    @Column(name = "youtube_url")
+var youtubeUrl: String? = null
+
 )

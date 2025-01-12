@@ -2,6 +2,7 @@
 
 package com.virtualrealm.our.gameMarketPlaces.service.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.virtualrealm.our.gameMarketPlaces.entity.Product
 import com.virtualrealm.our.gameMarketPlaces.error.NotFoundException
 import com.virtualrealm.our.gameMarketPlaces.model.genre.GenreResponse
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
 import org.springframework.web.multipart.MultipartFile
 import java.text.SimpleDateFormat
 import java.util.*
@@ -38,7 +40,8 @@ class ProductServiceImpl(
     @Value("\${sftp.username}") val sftpUsername: String,
     @Value("\${sftp.password}") val sftpPassword: String,
 ) : ProductService {
-
+    @Value("\${youtube.api.key}")
+    private lateinit var youtubeApiKey: String
     override fun create(createProductRequest: CreateProductRequest, file: MultipartFile?): ProductResponse {
         validationUtil.validate(createProductRequest)
 
@@ -96,7 +99,8 @@ class ProductServiceImpl(
             genres = genres,
             createdAt = Date(),
             updatedAt = Date(),
-            imageUrl = imageUrl
+            imageUrl = imageUrl,
+            youtubeUrl = createProductRequest.youtubeUrl
         )
 
         productRepository.save(product)
@@ -112,6 +116,21 @@ class ProductServiceImpl(
     override fun update(id: Long, updateProductRequest: UpdateProductRequest, file: MultipartFile?): ProductResponse {
         val product = findProductByIdOrThrowNotFound(id)
         validationUtil.validate(updateProductRequest)
+
+        // Validasi URL YouTube
+        if (!updateProductRequest.youtubeUrl.isNullOrEmpty()) {
+            val youtubeRegex = Regex("^(https?://)?(www\\.)?(youtube\\.com/watch\\?v=|youtu\\.be/)[a-zA-Z0-9_-]{11}(&.*)?$")
+            if (!youtubeRegex.matches(updateProductRequest.youtubeUrl)) {
+                throw IllegalArgumentException("Invalid YouTube URL")
+            }
+
+            // Opsi tambahan: Validasi video ID dengan YouTube Data API
+            val videoId = extractYoutubeVideoId(updateProductRequest.youtubeUrl!!)
+            if (!isValidYoutubeVideo(videoId)) {
+                throw IllegalArgumentException("YouTube video does not exist")
+            }
+        }
+
 
         // Fetch category and genre
         val category = updateProductRequest.categoryId?.let {
@@ -158,11 +177,28 @@ class ProductServiceImpl(
             this.category = category
             this.genres = genres
             this.imageUrl = imageUrl
+            this.youtubeUrl = updateProductRequest.youtubeUrl ?: this.youtubeUrl
             updatedAt = Date()
         }
 
         productRepository.save(product)
         return convertProductToProductResponse(product)
+    }
+    // Fungsi untuk validasi YouTube Video ID menggunakan YouTube Data API
+    fun isValidYoutubeVideo(videoId: String): Boolean {
+        val url = "https://www.googleapis.com/youtube/v3/videos?part=id&id=$videoId&key=$youtubeApiKey"
+        val response = RestTemplate().getForObject(url, String::class.java)
+        val json = ObjectMapper().readTree(response)
+        return json["items"].size() > 0
+    }
+
+
+    // Fungsi untuk mengekstrak video ID dari URL
+    private fun extractYoutubeVideoId(url: String): String {
+        val regex = Regex("^(?:https?://)?(?:www\\.)?(?:youtube\\.com/watch\\?v=|youtu\\.be/)([a-zA-Z0-9_-]{11})")
+        val matchResult = regex.find(url)
+        return matchResult?.groupValues?.get(1)
+            ?: throw IllegalArgumentException("Invalid YouTube URL format")
     }
 
 
@@ -200,7 +236,8 @@ class ProductServiceImpl(
             },
             created_at = formatTimestamp(product.createdAt),
             updated_at = formatTimestamp(product.updatedAt),
-            imageUrl = product.imageUrl
+            imageUrl = product.imageUrl,
+            youtubeUrl = product.youtubeUrl
         )
     }
 

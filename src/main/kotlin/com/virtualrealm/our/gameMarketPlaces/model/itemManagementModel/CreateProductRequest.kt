@@ -25,5 +25,8 @@ data class CreateProductRequest(
     @field:NotNull(message = "Category ID must not be null")
     val categoryId: Long?,
 
-    val genreIds: Set<Long>? = null
+    val genreIds: Set<Long>? = null,
+    val youtubeUrl: String?
+
+
 )

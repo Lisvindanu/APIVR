@@ -14,5 +14,6 @@ data class ProductResponse(
     val genres: List<GenreResponse>,
     val created_at: String,
     val updated_at: String,
-    val imageUrl: String?
+    val imageUrl: String?,
+    val youtubeUrl: String?
 )

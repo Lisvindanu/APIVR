@@ -24,5 +24,6 @@ data class UpdateProductRequest(
 
     val genreIds: Set<Long>?,
 
-    val imageUrl: String?
+    val imageUrl: String?,
+    val youtubeUrl: String?
 )
