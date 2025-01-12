@@ -17,7 +17,7 @@ class CorsConfig {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://127.0.0.1:5501", "http://localhost:5501", "http://localhost:8080","http://127.0.0.1:8000", "http://localhost:8000", "http://localhost:63342", "https://retrogameshub.virtual-realm.my.id" )
+        configuration.allowedOrigins = listOf("http://127.0.0.1:5501", "http://localhost:5501", "http://localhost:8080","http://127.0.0.1:8000", "http://localhost:8000", "http://localhost:63342", "https://retrogameshub.virtual-realm.my.id", "**", "*" )
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("Content-Type", "Authorization", "X-Api-Key")
         configuration.exposedHeaders = listOf("Authorization", "X-Api-Key")
