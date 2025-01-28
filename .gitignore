@@ -44,3 +44,6 @@ out/
 #/build/
 #!gradle/wrapper/gradle-wrapper.jar
 #**/build/libs/*.jar
+
+.env
+/src/main/resources/application.properties

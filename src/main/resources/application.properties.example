@@ -1,0 +1,83 @@
+# Application Configuration
+spring.application.name=GamesStore
+server.address=0.0.0.0
+server.port=${PORT:32451}
+spring.profiles.active=local
+
+# CORS Configuration
+spring.web.cors.allowed-origin-patterns=http://127.0.0.1:5501,http://localhost:8080,*
+spring.web.mvc.cors.allow-credentials=true
+spring.web.mvc.cors.allowed-origins=http://127.0.0.1:5501,http://localhost:5501,http://localhost:8080,http://127.0.0.1:8000,http://localhost:8000
+spring.web.mvc.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+spring.web.mvc.cors.allowed-headers=Content-Type,X-Api-Key
+
+# JPA Configuration
+spring.jpa.open-in-view=true
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MariaDBDialect
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# File Upload Configuration
+file.upload.dir=${UPLOAD_DIR:${TMPDIR:/tmp}}
+spring.web.resources.static-locations=file:/virtual-realm.my.id/public_html/uploads/images/
+
+# Database Configuration
+spring.datasource.username=${STACKHERO_MARIADB_ROOT_USERNAME}
+spring.datasource.password=${STACKHERO_MARIADB_ROOT_PASSWORD}
+spring.datasource.url=${STACKHERO_MARIADB_DATABASE_URL}
+
+# Connection Pool Configuration
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.idle-timeout=30000
+spring.datasource.hikari.connection-timeout=20000
+spring.datasource.hikari.validation-timeout=5000
+spring.datasource.hikari.leak-detection-threshold=2000
+
+# Actuator Configuration
+management.endpoints.web.exposure.include=*
+
+# Logging Configuration
+logging.level.org.springframework.security=DEBUG
+logging.level.org.springframework.web=DEBUG
+logging.level.org.springframework.boot.web.servlet=DEBUG
+
+# Multipart Configuration
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.max-file-size=2MB
+spring.servlet.multipart.max-request-size=10MB
+
+# SMTP Configuration
+spring.mail.host=${SMTP_HOST}
+spring.mail.port=587
+spring.mail.username=${SMTP_USERNAME}
+spring.mail.password=${SMTP_PASSWORD}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# OAuth2 Google Configuration
+spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID}
+spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET}
+spring.security.oauth2.client.registration.google.redirect-uri=${GOOGLE_REDIRECT_URI}
+spring.security.oauth2.client.registration.google.scope=profile,email
+spring.security.oauth2.client.provider.google.authorization-uri=https://accounts.google.com/o/oauth2/auth
+spring.security.oauth2.client.provider.google.token-uri=https://oauth2.googleapis.com/token
+spring.security.oauth2.client.provider.google.user-info-uri=https://www.googleapis.com/oauth2/v3/userinfo
+spring.security.oauth2.client.provider.google.user-name-attribute=sub
+
+# SFTP Configuration
+sftp.server=${SFTP_SERVER}
+sftp.port=${SFTP_PORT}
+sftp.username=${SFTP_USERNAME}
+sftp.password=${SFTP_PASSWORD}
+
+# Development Tools Configuration
+spring.devtools.livereload.enabled=true
+spring.devtools.restart.enabled=true
+spring.devtools.restart.additional-paths=src/main/kotlin,src/main/resources
+spring.devtools.restart.poll-interval=1000
+spring.devtools.restart.quiet-period=400
+
+# API Keys
+youtube.api.key=${YOUTUBE_API_KEY}
