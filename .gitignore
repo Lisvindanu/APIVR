@@ -1,25 +1,16 @@
+# Helper files
 HELP.md
-.gradle
+
+# Gradle directories and files
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-.idea
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# Ignore JAR files specifically
+/build/libs/*.jar
 
-### IntelliJ IDEA ###
-.idea
+# IntelliJ IDEA
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -27,25 +18,37 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
+# Eclipse/STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
 
-### Kotlin ###
-.kotlin
+# Kotlin specific files
+.kotlin/
 
-# Ignore Gradle build output directory
-#/build/
-#!gradle/wrapper/gradle-wrapper.jar
-#**/build/libs/*.jar
-
+# Environment and configuration files
 .env
 /src/main/resources/application.properties
 
-/uploads/images/
+# Uploads (e.g., user files or images)
+uploads/images/
+
+# Ignore other build outputs
+/build/
