@@ -47,3 +47,5 @@ out/
 
 .env
 /src/main/resources/application.properties
+
+/uploads/images/
