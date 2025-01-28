@@ -6,9 +6,6 @@ HELP.md
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
-# Ignore JAR files specifically
-/build/libs/*.jar
-
 # IntelliJ IDEA
 .idea/
 *.iws
@@ -50,5 +47,5 @@ bin/
 # Uploads (e.g., user files or images)
 uploads/images/
 
-# Ignore other build outputs
+# Ignore build outputs
 /build/
