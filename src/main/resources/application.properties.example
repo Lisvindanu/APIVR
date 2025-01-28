@@ -1,3 +1,5 @@
+##here's the example of application.properties
+
 # Application Configuration
 spring.application.name=GamesStore
 server.address=0.0.0.0
